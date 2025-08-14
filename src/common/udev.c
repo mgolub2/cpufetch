@@ -136,19 +136,32 @@ char* get_field_from_cpuinfo(char* CPUINFO_FIELD) {
   int filelen;
   char* buf;
   if((buf = read_file(_PATH_CPUINFO, &filelen)) == NULL) {
-    printWarn("read_file: %s: %s:\n", _PATH_CPUINFO, strerror(errno));
+    printWarn("read_file: %s: %s\n", _PATH_CPUINFO, strerror(errno));
     return NULL;
   }
 
   char* tmp1 = strstr(buf, CPUINFO_FIELD);
-  if(tmp1 == NULL) return NULL;
+  if(tmp1 == NULL) {
+    free(buf);
+    return NULL;
+  }
   tmp1 = tmp1 + strlen(CPUINFO_FIELD);
   char* tmp2 = strstr(tmp1, "\n");
+  if(tmp2 == NULL) {
+    // Handle last-line-without-newline case
+    tmp2 = buf + filelen;
+  }
 
-  int strlen = (1 + (tmp2-tmp1));
-  char* hardware = ecalloc(strlen, sizeof(char));
-  strncpy(hardware, tmp1, tmp2-tmp1);
+  int str_len = (int)(tmp2 - tmp1) + 1;
+  if(str_len <= 0) {
+    free(buf);
+    return NULL;
+  }
+  char* hardware = ecalloc((size_t)str_len, sizeof(char));
+  memcpy(hardware, tmp1, (size_t)(str_len - 1));
+  hardware[str_len - 1] = '\0';
 
+  free(buf);
   return hardware;
 }
 
