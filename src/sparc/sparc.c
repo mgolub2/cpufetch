@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 #include <assert.h>
 
 #include "sparc.h"
@@ -103,30 +104,33 @@ struct topology* get_topology_info(struct cache* cach) {
     free(package_ids_count);
   }
 
-  int *core_ids_unified = emalloc(sizeof(int) * topo->total_cores);
-  for(int i=0; i < topo->total_cores; i++) {
-    core_ids_unified[i] = -1;
+  // Count unique (package_id, core_id) pairs to determine cores per socket robustly
+  int unique_pairs = 0;
+  int max_pairs = topo->total_cores;
+  long long *seen_pairs = emalloc(sizeof(long long) * max_pairs);
+  for(int i=0; i < max_pairs; i++) {
+    seen_pairs[i] = -1;
   }
-  bool found = false;
   for(int i=0; i < topo->total_cores; i++) {
-    for(int j=0; j < topo->total_cores && !found; j++) {
-      if(core_ids_unified[j] == core_ids[i]) found = true;
+    // Pack ids into a 64-bit key: high 32 bits package, low 32 bits core
+    long long key = (((long long)package_ids[i]) << 32) | (unsigned long long)(uint32_t)core_ids[i];
+    bool found_pair = false;
+    for(int j=0; j < unique_pairs && !found_pair; j++) {
+      if(seen_pairs[j] == key) found_pair = true;
     }
-    if(!found) {
-      core_ids_unified[topo->physical_cores] = core_ids[i];
-      topo->physical_cores++;
+    if(!found_pair) {
+      seen_pairs[unique_pairs++] = key;
     }
-    found = false;
   }
 
-  topo->physical_cores = topo->sockets > 0 ? (topo->physical_cores / topo->sockets) : 0;
-  topo->logical_cores = topo->sockets > 0 ? (topo->total_cores / topo->sockets) : 0;
-  // UltraSPARC IIIi systems have no SMT (1 thread/core). If core_ids failed we assumed 1 core per CPU.
+  topo->physical_cores = (topo->sockets > 0) ? (unique_pairs / topo->sockets) : 0;
+  topo->logical_cores  = (topo->sockets > 0) ? (topo->total_cores / topo->sockets) : 0;
+  // UltraSPARC IIIi systems have no SMT (1 thread/core).
   topo->smt_supported = 1;
 
   free(core_ids);
   free(package_ids);
-  free(core_ids_unified);
+  free(seen_pairs);
 
   return topo;
 }
@@ -162,7 +166,79 @@ struct frequency* get_frequency_info(void) {
   return freq;
 }
 
+// Try to estimate single-precision FLOPs using a short FP loop on one core,
+// then scale by total cores. Enabled only if CPUFETCH_MEASURE_SP_FLOPS=1.
+static int64_t measure_peak_performance_f32(struct topology* topo) {
+  const char* env = getenv("CPUFETCH_MEASURE_SP_FLOPS");
+  if(env == NULL || env[0] != '1') return -1;
+
+  struct timespec t0, t1;
+  // 50ms target runtime
+  const double target_seconds = 0.05;
+  volatile float a = 1.0f, b = 1.0001f, c = 0.9997f, d = 1.0003f;
+  volatile float e = 0.5f, f = 1.5f, g = 2.0f, h = -0.25f;
+  uint64_t iters = 0;
+  int ops_per_iter = 32; // scalar FLOPs per loop body
+
+  if(clock_gettime(CLOCK_MONOTONIC, &t0) != 0) return -1;
+  for(;;) {
+#if defined(__sparc__)
+    // Inline SPARC v9 single-precision math to encourage FPU throughput
+    register float ra = a, rb = b, rc = c, rd = d, re = e, rf = f, rg = g, rh = h;
+    __asm__ __volatile__(
+      "fadds %0, %1, %0\n\t"
+      "fmuls %1, %2, %1\n\t"
+      "fadds %2, %3, %2\n\t"
+      "fmuls %3, %0, %3\n\t"
+      "fadds %4, %5, %4\n\t"
+      "fmuls %5, %6, %5\n\t"
+      "fadds %6, %7, %6\n\t"
+      "fmuls %7, %4, %7\n\t"
+      "fadds %0, %1, %0\n\t"
+      "fmuls %1, %2, %1\n\t"
+      "fadds %2, %3, %2\n\t"
+      "fmuls %3, %0, %3\n\t"
+      "fadds %4, %5, %4\n\t"
+      "fmuls %5, %6, %5\n\t"
+      "fadds %6, %7, %6\n\t"
+      "fmuls %7, %4, %7\n\t"
+      : "+f"(ra), "+f"(rb), "+f"(rc), "+f"(rd), "+f"(re), "+f"(rf), "+f"(rg), "+f"(rh)
+      :
+      : "memory");
+    a = ra; b = rb; c = rc; d = rd; e = re; f = rf; g = rg; h = rh;
+    // 32 FLOPs in the asm block
+    ops_per_iter = 32;
+#else
+    // Unrolled FP ops to keep FPU busy (portable C fallback)
+    a = a + b; b = b * c; c = c + d; d = d * a;
+    e = e + f; f = f * g; g = g + h; h = h * e;
+    a = a + b; b = b * c; c = c + d; d = d * a;
+    e = e + f; f = f * g; g = g + h; h = h * e;
+    a = a + b; b = b * c; c = c + d; d = d * a;
+    e = e + f; f = f * g; g = g + h; h = h * e;
+    a = a + b; b = b * c; c = c + d; d = d * a;
+    e = e + f; f = f * g; g = g + h; h = h * e;
+#endif
+    iters++;
+    if((iters & 0x3FF) == 0) {
+      if(clock_gettime(CLOCK_MONOTONIC, &t1) != 0) break;
+      double elapsed = (double)(t1.tv_sec - t0.tv_sec) + (double)(t1.tv_nsec - t0.tv_nsec) / 1e9;
+      if(elapsed >= target_seconds) {
+        double flops_per_core = ((double)iters * ops_per_iter) / elapsed;
+        double total_flops = flops_per_core * (double)(topo->physical_cores * topo->sockets);
+        if(total_flops <= 0.0) return -1;
+        return (int64_t) total_flops;
+      }
+    }
+  }
+  return -1;
+}
+
 int64_t get_peak_performance(struct cpuInfo* cpu, struct topology* topo, int64_t freq) {
+  // Optional measured SP FLOPS estimate
+  int64_t measured = measure_peak_performance_f32(topo);
+  if(measured > 0) return measured;
+
   if(freq == UNKNOWN_DATA) {
     return -1;
   }
