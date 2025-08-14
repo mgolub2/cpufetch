@@ -220,13 +220,15 @@ static int64_t measure_peak_performance_f32(struct topology* topo) {
     typedef int v2si __attribute__ ((vector_size (8)));
     typedef short v4hi __attribute__ ((vector_size (8)));
     typedef unsigned char v8qi __attribute__ ((vector_size (8)));
+    typedef unsigned char v4qi __attribute__ ((vector_size (4)));
 
     volatile v4hi a16 = (v4hi){1,2,3,4};
     volatile v4hi b16 = (v4hi){5,6,7,8};
     volatile v2si a32 = (v2si){11,12};
     volatile v2si b32 = (v2si){13,14};
-    volatile v8qi q8a = (v8qi){1,2,3,4,5,6,7,8};
-    volatile v8qi q8b = (v8qi){8,7,6,5,4,3,2,1};
+    volatile v4qi qa4 = (v4qi){1,2,3,4};
+    volatile v4qi qb4 = (v4qi){8,7,6,5};
+    volatile v8qi acc8 = (v8qi){0,0,0,0,0,0,0,0};
 
     int ops_per_iter = 0;
     if(gettimeofday(&t0, NULL) != 0) return -1;
@@ -236,26 +238,28 @@ static int64_t measure_peak_performance_f32(struct topology* topo) {
       v4hi t1_16 = __builtin_vis_fpsub16(b16, a16);   // 4 ops
       v2si t0_32 = __builtin_vis_fpadd32(a32, b32);   // 2 ops
       v2si t1_32 = __builtin_vis_fpsub32(b32, a32);   // 2 ops
-      v8qi t2_8  = __builtin_vis_fpmerge(q8a, q8b);   // treat as 8 moves/ops
+      v8qi t2_8  = __builtin_vis_fpack32(t0_32, acc8); // 8 ops
+      v8qi mrg8  = __builtin_vis_fpmerge(qa4, qb4);   // 8 ops
+      v4qi pk16  = __builtin_vis_fpack16(t0_16);      // 4 ops
       // Mix results to reduce dependencies and keep live
       a16 = __builtin_vis_fpadd16(t0_16, t1_16);      // 4 ops
       b16 = __builtin_vis_fpsub16(t1_16, t0_16);      // 4 ops
       a32 = __builtin_vis_fpadd32(t0_32, t1_32);      // 2 ops
       b32 = __builtin_vis_fpsub32(t1_32, t0_32);      // 2 ops
-      q8a = __builtin_vis_fpack32(a32, t2_8);         // 8 ops
-      q8b = __builtin_vis_fpack16(a16);               // 8 ops
+      acc8 = t2_8;
+      qa4 = pk16;                                     // keep pk16 live
+      qb4 = (v4qi){(unsigned char)mrg8[0], (unsigned char)mrg8[2], (unsigned char)mrg8[4], (unsigned char)mrg8[6]};
 
       // Count per-iteration lane-ops conservatively once
-      ops_per_iter = 4+4 + 2+2 + 8 + 4+4 + 2+2 + 8 + 8; // = 48
+      ops_per_iter = 4+4 + 2+2 + 8 + 8 + 4 + 4+4 + 2+2; // = 42
 
   #if defined(CPUFETCH_GCC_VIS2)
       // If compiled with VIS2 and CPU advertises it, add a couple of ops
       if(sparc_has_vis_level(2)) {
         // VIS2 byte/halfword shuffle to increase instruction mix
         v2si s0 = __builtin_vis_bshufflev2si(a32, b32); // 2 lanes (count 2)
-        v4hi s1 = __builtin_vis_bshufflev2si(a16, b16); // 4 lanes (count 4)
-        (void)s0; (void)s1;
-        ops_per_iter += 2 + 4;
+        a32 = s0;
+        ops_per_iter += 2;
       }
   #endif
 
