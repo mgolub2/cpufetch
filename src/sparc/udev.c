@@ -1,5 +1,8 @@
 #include <errno.h>
 #include <string.h>
+#include <stdint.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "../common/udev.h"
 #include "../common/global.h"
@@ -82,23 +85,77 @@ long get_frequency_from_cpuinfo(void) {
   return mhz;
 }
 
-// No reliable cpuinfo cache fields: rely on sysfs only on SPARC.
+// Prefer OpenPROM/Device Tree for SPARC cache sizes; fall back to sysfs.
+
+static long read_be_cells_from_file(const char* path) {
+  // DT properties here are usually 32-bit big-endian cells holding sizes
+  // Some firmwares may provide 64-bit, but most SPARC cache sizes fit 32-bit
+  uint8_t buf[8];
+  int fd = open(path, O_RDONLY);
+  if(fd < 0) return -1;
+  ssize_t n = read(fd, buf, sizeof(buf));
+  close(fd);
+  if(n < 4) return -1;
+
+  // Use the last 4 bytes read in case of 64-bit cell arrays
+  uint32_t v = ((uint32_t)buf[n-4] << 24) | ((uint32_t)buf[n-3] << 16) |
+               ((uint32_t)buf[n-2] << 8)  | ((uint32_t)buf[n-1]);
+  return (long)v; // bytes
+}
+
+static long read_cache_from_dt(const char* prop) {
+  const char* bases[] = {
+    "/sys/firmware/devicetree/base/cpus/cpu@0/",
+    "/proc/device-tree/cpus/cpu@0/",
+    "/proc/openprom/cpus/cpu@0/",
+    // Some platforms expose cpu node directly at root
+    "/sys/firmware/devicetree/base/cpu@0/",
+    "/proc/device-tree/cpu@0/",
+    "/proc/openprom/cpu@0/"
+  };
+
+  char path[256];
+  for(size_t i = 0; i < sizeof(bases)/sizeof(bases[0]); i++) {
+    memset(path, 0, sizeof(path));
+    // Build: base + prop
+    size_t blen = strlen(bases[i]);
+    size_t plen = strlen(prop);
+    if(blen + plen + 1 >= sizeof(path)) continue;
+    memcpy(path, bases[i], blen);
+    memcpy(path + blen, prop, plen);
+    long v = read_be_cells_from_file(path);
+    if(v > 0) return v;
+  }
+  return -1;
+}
 
 // SPARC-specific cache size getters. Prefer cpuinfo on SPARC; fall back to sysfs via common helpers.
 long get_l1i_cache_size_sparc(uint32_t core) {
-  return get_l1i_cache_size(core);
+  UNUSED(core);
+  long v = read_cache_from_dt("i-cache-size");
+  if(v > 0) return v;
+  return get_l1i_cache_size(0);
 }
 
 long get_l1d_cache_size_sparc(uint32_t core) {
-  return get_l1d_cache_size(core);
+  UNUSED(core);
+  long v = read_cache_from_dt("d-cache-size");
+  if(v > 0) return v;
+  return get_l1d_cache_size(0);
 }
 
 long get_l2_cache_size_sparc(uint32_t core) {
-  return get_l2_cache_size(core);
+  UNUSED(core);
+  long v = read_cache_from_dt("l2-cache-size");
+  if(v > 0) return v;
+  return get_l2_cache_size(0);
 }
 
 long get_l3_cache_size_sparc(uint32_t core) {
-  return get_l3_cache_size(core);
+  UNUSED(core);
+  long v = read_cache_from_dt("l3-cache-size");
+  if(v > 0) return v;
+  return get_l3_cache_size(0);
 }
 
 int get_num_caches_by_level_sparc(struct cpuInfo* cpu, uint32_t level) {
