@@ -304,7 +304,18 @@ int get_num_sockets_from_files(char** paths, int num_paths) {
 }
 
 int get_num_caches_by_level(struct cpuInfo* cpu, uint32_t level) {
-  char** paths = emalloc(sizeof(char *) * cpu->topo->total_cores);
+  int total_cores = -1;
+  if(cpu != NULL && cpu->topo != NULL && cpu->topo->total_cores > 0) {
+    total_cores = cpu->topo->total_cores;
+  }
+  else {
+    total_cores = get_ncores_from_cpuinfo();
+  }
+  if(total_cores <= 0) {
+    return -1;
+  }
+
+  char** paths = emalloc(sizeof(char *) * total_cores);
   char* cache_path = NULL;
 
   if(level == 0) cache_path = _PATH_CACHE_L1I;
@@ -316,14 +327,14 @@ int get_num_caches_by_level(struct cpuInfo* cpu, uint32_t level) {
     return -1;
   }
 
-  for(int i=0; i < cpu->topo->total_cores; i++) {
+  for(int i=0; i < total_cores; i++) {
     paths[i] = emalloc(sizeof(char) * _PATH_CACHE_MAX_LEN);
     sprintf(paths[i], "%s%s/cpu%d%s%s",  _PATH_SYS_SYSTEM, _PATH_SYS_CPU, i, cache_path, _PATH_CACHE_SHARED_MAP);
   }
 
-  int ret = get_num_caches_from_files(paths, cpu->topo->total_cores);
+  int ret = get_num_caches_from_files(paths, total_cores);
 
-  for(int i=0; i < cpu->topo->total_cores; i++)
+  for(int i=0; i < total_cores; i++)
     free(paths[i]);
   free(paths);
 
