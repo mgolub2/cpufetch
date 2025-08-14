@@ -65,7 +65,7 @@ ifneq ($(OS),Windows_NT)
 		SRC_DIR=src/sparc/
 		SOURCE += $(COMMON_SRC) $(SRC_DIR)sparc.c $(SRC_DIR)uarch.c $(SRC_DIR)udev.c
 		HEADERS += $(COMMON_HDR) $(SRC_DIR)sparc.h $(SRC_DIR)uarch.h $(SRC_DIR)udev.h
-		CFLAGS += -DARCH_SPARC -Wno-unused-parameter -std=c99 -m64 -mcpu=native
+		CFLAGS += -DARCH_SPARC -Wno-unused-parameter -std=c99 -fstack-protector-all -mcpu=native
 
 		is_vis1_flag_supported := $(shell printf 'int main(){return 0;}\n' | $(CC) -mvis -x c - -o /dev/null 2>/dev/null && echo yes)
 		ifneq ($(is_vis1_flag_supported),)
@@ -109,13 +109,13 @@ $(error Aborting compilation)
 	OUTPUT=cpufetch.exe
 endif
 
-all: CFLAGS += -O2
+all: CFLAGS += -O3
 all: $(OUTPUT)
 
 debug: CFLAGS += -g -O0
 debug: $(OUTPUT)
 
-static: CFLAGS += -static -O2
+static: CFLAGS += -static -O3
 static: $(OUTPUT)
 
 strict: CFLAGS += -O2 -Werror -fsanitize=undefined -D_FORTIFY_SOURCE=2
