@@ -66,6 +66,15 @@ ifneq ($(OS),Windows_NT)
 		SOURCE += $(COMMON_SRC) $(SRC_DIR)sparc.c $(SRC_DIR)uarch.c $(SRC_DIR)udev.c
 		HEADERS += $(COMMON_HDR) $(SRC_DIR)sparc.h $(SRC_DIR)uarch.h $(SRC_DIR)udev.h
 		CFLAGS += -DARCH_SPARC -Wno-unused-parameter -std=c99 -fstack-protector-all
+
+		# Try enabling VIS builtins if the compiler supports them. Non-fatal if not.
+		is_vis2_flag_supported := $(shell $(CC) -mvis2 -x c - -o /dev/null 2>/dev/null <<<"int main(){return 0;}" && echo 'yes')
+		is_vis1_flag_supported := $(shell $(CC) -mvis -x c - -o /dev/null 2>/dev/null <<<"int main(){return 0;}" && echo 'yes')
+		ifneq ($(is_vis2_flag_supported),)
+			CFLAGS += -mvis2
+		else ifneq ($(is_vis1_flag_supported),)
+			CFLAGS += -mvis
+		endif
 	else
 		# Error lines should not be tabulated because Makefile complains about it
 $(warning Unsupported arch detected: $(arch). See https://github.com/Dr-Noob/cpufetch#1-support)

@@ -85,8 +85,8 @@ void print_help(char *argv[]) {
   printf("    Peak performance information is NOT accurate. cpufetch computes peak performance using the max\n");
   printf("    frequency of the CPU. However, to compute the peak performance, you need to know the frequency of the\n");
   printf("    CPU running AVX code. By default, this value is not fetched by cpufetch, but you can use the\n");
-  printf("    --accurate-pp option, which will measure the AVX frequency and show a more precise estimation\n");
-  printf("    (this option is only available in x86 architectures).\n");
+  printf("    --accurate-pp option, which will measure the vector frequency and show a more precise estimation\n");
+  printf("    (x86 uses SSE/AVX; SPARC uses VIS/VIS2 when available).\n");
   printf("    To precisely measure peak performance, see: https://github.com/Dr-Noob/peakperf\n");
   printf("\n");
   printf("    Both --accurate-pp and --measure-max-freq measure the actual frequency of the CPU. However,\n");

@@ -175,8 +175,26 @@ struct frequency* get_frequency_info(void) {
   return freq;
 }
 
-// Try to estimate single-precision FLOPs using a short FP loop on one core,
-// then scale by total cores. Enabled only if CPUFETCH_MEASURE_SP_FLOPS=1.
+// Lightweight parser for cpucaps to detect VIS/VIS2 presence
+static bool sparc_has_vis_level(int level) {
+  char* caps = get_cpucaps_from_cpuinfo();
+  if(caps == NULL) return false;
+  bool has = false;
+  if(level >= 2) {
+    if(strstr(caps, "vis2") != NULL || strstr(caps, "VIS2") != NULL)
+      has = true;
+  }
+  if(!has) {
+    if(strstr(caps, "vis") != NULL || strstr(caps, "VIS") != NULL)
+      has = true;
+  }
+  free(caps);
+  return has;
+}
+
+// Prefer measuring VIS/VIS2 packed arithmetic throughput when enabled.
+// Falls back to scalar FP32 loop if VIS is unavailable.
+// Enabled only if accurate-pp was requested or CPUFETCH_MEASURE_SP_FLOPS=1.
 static int64_t measure_peak_performance_f32(struct topology* topo) {
   const char* env = getenv("CPUFETCH_MEASURE_SP_FLOPS");
   bool enabled = accurate_pp() || (env != NULL && env[0] == '1');
@@ -192,41 +210,77 @@ static int64_t measure_peak_performance_f32(struct topology* topo) {
       if(v > 0.05 && v < 30.0) target_seconds = v;
     }
   }
+  uint64_t iters = 0;
+
+#if defined(__sparc__)
+  // If VIS is available, use packed arithmetic to stress VIS pipelines
+  if(sparc_has_vis_level(1)) {
+    // Types from GCC VIS built-ins documentation
+    typedef int v1si __attribute__ ((vector_size (4)));
+    typedef int v2si __attribute__ ((vector_size (8)));
+    typedef short v4hi __attribute__ ((vector_size (8)));
+    typedef unsigned char v8qi __attribute__ ((vector_size (8)));
+
+    volatile v4hi a16 = (v4hi){1,2,3,4};
+    volatile v4hi b16 = (v4hi){5,6,7,8};
+    volatile v2si a32 = (v2si){11,12};
+    volatile v2si b32 = (v2si){13,14};
+    volatile v8qi q8a = (v8qi){1,2,3,4,5,6,7,8};
+    volatile v8qi q8b = (v8qi){8,7,6,5,4,3,2,1};
+
+    int ops_per_iter = 0;
+    if(gettimeofday(&t0, NULL) != 0) return -1;
+    for(;;) {
+      // VIS 1.0 packed add/sub (each op works on lanes)
+      v4hi t0_16 = __builtin_vis_fpadd16(a16, b16);   // 4 ops
+      v4hi t1_16 = __builtin_vis_fpsub16(b16, a16);   // 4 ops
+      v2si t0_32 = __builtin_vis_fpadd32(a32, b32);   // 2 ops
+      v2si t1_32 = __builtin_vis_fpsub32(b32, a32);   // 2 ops
+      v8qi t2_8  = __builtin_vis_fpmerge(q8a, q8b);   // treat as 8 moves/ops
+      // Mix results to reduce dependencies and keep live
+      a16 = __builtin_vis_fpadd16(t0_16, t1_16);      // 4 ops
+      b16 = __builtin_vis_fpsub16(t1_16, t0_16);      // 4 ops
+      a32 = __builtin_vis_fpadd32(t0_32, t1_32);      // 2 ops
+      b32 = __builtin_vis_fpsub32(t1_32, t0_32);      // 2 ops
+      q8a = __builtin_vis_fpack32(a32, t2_8);         // 8 ops
+      q8b = __builtin_vis_fpack16(a16);               // 8 ops
+
+      // Count per-iteration lane-ops conservatively once
+      ops_per_iter = 4+4 + 2+2 + 8 + 4+4 + 2+2 + 8 + 8; // = 48
+
+  #if defined(__VIS__) || defined(__vis) || defined(__sparc_v9__)
+      // If compiled with VIS2 and CPU advertises it, add a couple of ops
+      if(sparc_has_vis_level(2)) {
+        // VIS2 byte/halfword shuffle to increase instruction mix
+        v2si s0 = __builtin_vis_bshufflev2si(a32, b32); // 2 lanes (count 2)
+        v4hi s1 = __builtin_vis_bshufflev2si(a16, b16); // 4 lanes (count 4)
+        (void)s0; (void)s1;
+        ops_per_iter += 2 + 4;
+      }
+  #endif
+
+      iters++;
+      if((iters & 0x3FF) == 0) {
+        if(gettimeofday(&t1, NULL) != 0) break;
+        double elapsed = (double)(t1.tv_sec - t0.tv_sec) + (double)(t1.tv_usec - t0.tv_usec) / 1e6;
+        if(elapsed >= target_seconds) {
+          double ops_per_core = ((double)iters * ops_per_iter) / elapsed;
+          double total_ops = ops_per_core * (double)(topo->physical_cores * topo->sockets);
+          if(total_ops <= 0.0) return -1;
+          return (int64_t) total_ops;
+        }
+      }
+    }
+  }
+#endif
+
+  // Fallback: scalar FP32 loop if VIS is not present
   volatile float a = 1.0f, b = 1.0001f, c = 0.9997f, d = 1.0003f;
   volatile float e = 0.5f, f = 1.5f, g = 2.0f, h = -0.25f;
-  uint64_t iters = 0;
   int ops_per_iter = 32; // scalar FLOPs per loop body
 
   if(gettimeofday(&t0, NULL) != 0) return -1;
   for(;;) {
-#if defined(__sparc__)
-    // Inline SPARC v9 single-precision math to encourage FPU throughput
-    register float ra = a, rb = b, rc = c, rd = d, re = e, rf = f, rg = g, rh = h;
-    __asm__ __volatile__(
-      "fadds %0, %1, %0\n\t"
-      "fmuls %1, %2, %1\n\t"
-      "fadds %2, %3, %2\n\t"
-      "fmuls %3, %0, %3\n\t"
-      "fadds %4, %5, %4\n\t"
-      "fmuls %5, %6, %5\n\t"
-      "fadds %6, %7, %6\n\t"
-      "fmuls %7, %4, %7\n\t"
-      "fadds %0, %1, %0\n\t"
-      "fmuls %1, %2, %1\n\t"
-      "fadds %2, %3, %2\n\t"
-      "fmuls %3, %0, %3\n\t"
-      "fadds %4, %5, %4\n\t"
-      "fmuls %5, %6, %5\n\t"
-      "fadds %6, %7, %6\n\t"
-      "fmuls %7, %4, %7\n\t"
-      : "+f"(ra), "+f"(rb), "+f"(rc), "+f"(rd), "+f"(re), "+f"(rf), "+f"(rg), "+f"(rh)
-      :
-      : "memory");
-    a = ra; b = rb; c = rc; d = rd; e = re; f = rf; g = rg; h = rh;
-    // 32 FLOPs in the asm block
-    ops_per_iter = 32;
-#else
-    // Unrolled FP ops to keep FPU busy (portable C fallback)
     a = a + b; b = b * c; c = c + d; d = d * a;
     e = e + f; f = f * g; g = g + h; h = h * e;
     a = a + b; b = b * c; c = c + d; d = d * a;
@@ -235,7 +289,6 @@ static int64_t measure_peak_performance_f32(struct topology* topo) {
     e = e + f; f = f * g; g = g + h; h = h * e;
     a = a + b; b = b * c; c = c + d; d = d * a;
     e = e + f; f = f * g; g = g + h; h = h * e;
-#endif
     iters++;
     if((iters & 0x3FF) == 0) {
       if(gettimeofday(&t1, NULL) != 0) break;
@@ -252,7 +305,7 @@ static int64_t measure_peak_performance_f32(struct topology* topo) {
 }
 
 int64_t get_peak_performance(struct cpuInfo* cpu, struct topology* topo, int64_t freq) {
-  // Optional measured SP FLOPS estimate
+  // Prefer VIS/VIS2 packed throughput if measurement is enabled
   int64_t measured = measure_peak_performance_f32(topo);
   if(measured > 0) return measured;
 
