@@ -141,7 +141,8 @@ char* get_str_l1d(struct cache* cach) {
 }
 
 char* get_str_l2(struct cache* cach) {
-  assert(cach->L2->exists);
+  if(!cach->L2->exists)
+    return NULL;
   return get_str_cache(cach->L2->size, cach->L2->num_caches);
 }
 
