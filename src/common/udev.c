@@ -5,6 +5,73 @@
 
 #define _PATH_DEVTREE          "/proc/device-tree/compatible"
 
+// Helpers to robustly discover cache indices on any architecture
+static void trim_newline(char* s) {
+  if(s == NULL) return;
+  for(int i = 0; s[i]; i++) {
+    if(s[i] == '\n' || s[i] == '\r') { s[i] = '\0'; break; }
+  }
+}
+
+// Returns the cache index (indexX) for a given core, level and type.
+// Example matches: level=1 + type="Data" => L1d, level=1 + type="Instruction" => L1i,
+// level=2 + type="Unified" => L2, etc.
+// If wanted_type is NULL, only the level is matched.
+static int find_cache_index_for(uint32_t core, int wanted_level, const char* wanted_type) {
+  // Reasonable upper bound for number of indices seen in practice
+  const int max_indices = 16;
+
+  for(int idx = 0; idx < max_indices; idx++) {
+    char path_level[_PATH_CACHE_MAX_LEN];
+    char path_type[_PATH_CACHE_MAX_LEN];
+
+    // Build paths to level and type files
+    snprintf(path_level, sizeof(path_level), "%s%s/cpu%d/cache/index%d/level", _PATH_SYS_SYSTEM, _PATH_SYS_CPU, core, idx);
+    snprintf(path_type, sizeof(path_type), "%s%s/cpu%d/cache/index%d/type",  _PATH_SYS_SYSTEM, _PATH_SYS_CPU, core, idx);
+
+    int len_level;
+    char* buf_level = read_file(path_level, &len_level);
+    if(buf_level == NULL) {
+      // If level is not readable, this index likely does not exist; continue
+      continue;
+    }
+
+    // Parse level
+    buf_level[len_level] = '\0';
+    char* endptr = NULL;
+    errno = 0;
+    long lvl = strtol(buf_level, &endptr, 10);
+    if(errno != 0) {
+      free(buf_level);
+      continue;
+    }
+    free(buf_level);
+
+    if((int)lvl != wanted_level) {
+      continue;
+    }
+
+    if(wanted_type != NULL) {
+      int len_type;
+      char* buf_type = read_file(path_type, &len_type);
+      if(buf_type == NULL) {
+        continue;
+      }
+      buf_type[len_type] = '\0';
+      trim_newline(buf_type);
+      bool match = (strcmp(buf_type, wanted_type) == 0);
+      free(buf_type);
+      if(!match) {
+        continue;
+      }
+    }
+
+    return idx;
+  }
+
+  return -1;
+}
+
 // https://www.kernel.org/doc/html/latest/core-api/cpu_hotplug.html
 int get_ncores_from_cpuinfo(void) {
   // Examples:
@@ -165,26 +232,45 @@ long get_min_freq_from_file(uint32_t core) {
 }
 
 long get_l1i_cache_size(uint32_t core) {
+  // Prefer robust discovery using level/type
+  int idx = find_cache_index_for(core, 1, "Instruction");
   char path[_PATH_CACHE_MAX_LEN];
-  sprintf(path, "%s%s/cpu%d%s%s",  _PATH_SYS_SYSTEM, _PATH_SYS_CPU, core, _PATH_CACHE_L1I, _PATH_CACHE_SIZE);
+  if(idx >= 0)
+    snprintf(path, sizeof(path), "%s%s/cpu%d/cache/index%d%s", _PATH_SYS_SYSTEM, _PATH_SYS_CPU, core, idx, _PATH_CACHE_SIZE);
+  else
+    snprintf(path, sizeof(path), "%s%s/cpu%d%s%s", _PATH_SYS_SYSTEM, _PATH_SYS_CPU, core, _PATH_CACHE_L1I, _PATH_CACHE_SIZE);
   return get_cache_size_from_file(path);
 }
 
 long get_l1d_cache_size(uint32_t core) {
+  int idx = find_cache_index_for(core, 1, "Data");
   char path[_PATH_CACHE_MAX_LEN];
-  sprintf(path, "%s%s/cpu%d%s%s",  _PATH_SYS_SYSTEM, _PATH_SYS_CPU, core, _PATH_CACHE_L1D, _PATH_CACHE_SIZE);
+  if(idx >= 0)
+    snprintf(path, sizeof(path), "%s%s/cpu%d/cache/index%d%s", _PATH_SYS_SYSTEM, _PATH_SYS_CPU, core, idx, _PATH_CACHE_SIZE);
+  else
+    snprintf(path, sizeof(path), "%s%s/cpu%d%s%s",  _PATH_SYS_SYSTEM, _PATH_SYS_CPU, core, _PATH_CACHE_L1D, _PATH_CACHE_SIZE);
   return get_cache_size_from_file(path);
 }
 
 long get_l2_cache_size(uint32_t core) {
+  int idx = find_cache_index_for(core, 2, "Unified");
+  if(idx < 0) idx = find_cache_index_for(core, 2, NULL); // Fallback: any type at level 2
   char path[_PATH_CACHE_MAX_LEN];
-  sprintf(path, "%s%s/cpu%d%s%s",  _PATH_SYS_SYSTEM, _PATH_SYS_CPU, core, _PATH_CACHE_L2, _PATH_CACHE_SIZE);
+  if(idx >= 0)
+    snprintf(path, sizeof(path), "%s%s/cpu%d/cache/index%d%s",  _PATH_SYS_SYSTEM, _PATH_SYS_CPU, core, idx, _PATH_CACHE_SIZE);
+  else
+    snprintf(path, sizeof(path), "%s%s/cpu%d%s%s",  _PATH_SYS_SYSTEM, _PATH_SYS_CPU, core, _PATH_CACHE_L2, _PATH_CACHE_SIZE);
   return get_cache_size_from_file(path);
 }
 
 long get_l3_cache_size(uint32_t core) {
+  int idx = find_cache_index_for(core, 3, "Unified");
+  if(idx < 0) idx = find_cache_index_for(core, 3, NULL);
   char path[_PATH_CACHE_MAX_LEN];
-  sprintf(path, "%s%s/cpu%d%s%s",  _PATH_SYS_SYSTEM, _PATH_SYS_CPU, core, _PATH_CACHE_L3, _PATH_CACHE_SIZE);
+  if(idx >= 0)
+    snprintf(path, sizeof(path), "%s%s/cpu%d/cache/index%d%s",  _PATH_SYS_SYSTEM, _PATH_SYS_CPU, core, idx, _PATH_CACHE_SIZE);
+  else
+    snprintf(path, sizeof(path), "%s%s/cpu%d%s%s",  _PATH_SYS_SYSTEM, _PATH_SYS_CPU, core, _PATH_CACHE_L3, _PATH_CACHE_SIZE);
   return get_cache_size_from_file(path);
 }
 
@@ -292,20 +378,39 @@ int get_num_sockets_from_files(char** paths, int num_paths) {
 
 int get_num_caches_by_level(struct cpuInfo* cpu, uint32_t level) {
   char** paths = emalloc(sizeof(char *) * cpu->topo->total_cores);
-  char* cache_path = NULL;
+  int wanted_level = -1;
+  const char* wanted_type = NULL;
 
-  if(level == 0) cache_path = _PATH_CACHE_L1I;
-  else if(level == 1) cache_path = _PATH_CACHE_L1D;
-  else if(level == 2) cache_path = _PATH_CACHE_L2;
-  else if(level == 3) cache_path = _PATH_CACHE_L3;
+  // Map to (level,type)
+  if(level == 0) { wanted_level = 1; wanted_type = "Instruction"; }
+  else if(level == 1) { wanted_level = 1; wanted_type = "Data"; }
+  else if(level == 2) { wanted_level = 2; wanted_type = "Unified"; }
+  else if(level == 3) { wanted_level = 3; wanted_type = "Unified"; }
   else {
     printBug("Found invalid cache level to inspect: %d\n", level);
     return -1;
   }
 
+  // Discover the correct index once (assume same layout across cores)
+  int idx = find_cache_index_for(0, wanted_level, wanted_type);
+  if(idx < 0 && (level == 2 || level == 3)) {
+    // Fallback: accept any type at the desired level
+    idx = find_cache_index_for(0, wanted_level, NULL);
+  }
+
   for(int i=0; i < cpu->topo->total_cores; i++) {
     paths[i] = emalloc(sizeof(char) * _PATH_CACHE_MAX_LEN);
-    sprintf(paths[i], "%s%s/cpu%d%s%s",  _PATH_SYS_SYSTEM, _PATH_SYS_CPU, i, cache_path, _PATH_CACHE_SHARED_MAP);
+    if(idx >= 0)
+      snprintf(paths[i], _PATH_CACHE_MAX_LEN, "%s%s/cpu%d/cache/index%d%s",  _PATH_SYS_SYSTEM, _PATH_SYS_CPU, i, idx, _PATH_CACHE_SHARED_MAP);
+    else {
+      // Fallback to historical index mapping
+      const char* cache_path = NULL;
+      if(level == 0) cache_path = _PATH_CACHE_L1I;
+      else if(level == 1) cache_path = _PATH_CACHE_L1D;
+      else if(level == 2) cache_path = _PATH_CACHE_L2;
+      else cache_path = _PATH_CACHE_L3;
+      snprintf(paths[i], _PATH_CACHE_MAX_LEN, "%s%s/cpu%d%s%s",  _PATH_SYS_SYSTEM, _PATH_SYS_CPU, i, cache_path, _PATH_CACHE_SHARED_MAP);
+    }
   }
 
   int ret = get_num_caches_from_files(paths, cpu->topo->total_cores);
