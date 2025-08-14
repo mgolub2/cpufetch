@@ -262,7 +262,7 @@ static int64_t measure_vis_ops_throughput(struct topology* topo) {
   if(!sparc_has_vis_level(1)) return -1;
 
   struct timeval t0, t1;
-  double target_seconds = 0.4;
+  double target_seconds = 2;
   uint64_t iters = 0;
 
   typedef unsigned char v8qi __attribute__ ((vector_size (8)));
