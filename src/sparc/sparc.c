@@ -69,19 +69,16 @@ struct topology* get_topology_info(struct cache* cach) {
   int* core_ids = emalloc(sizeof(int) * topo->total_cores);
   int* package_ids = emalloc(sizeof(int) * topo->total_cores);
 
-  if(!fill_core_ids_from_sys(core_ids, topo->total_cores)) {
+  bool core_ids_ok = fill_core_ids_from_sys(core_ids, topo->total_cores);
+  if(!core_ids_ok) {
     printWarn("fill_core_ids_from_sys failed, output may be incomplete/invalid");
-    for(int i=0; i < topo->total_cores; i++) core_ids[i] = 0;
+    for(int i=0; i < topo->total_cores; i++) core_ids[i] = i; // assume one core per CPU, no SMT
   }
 
   if(!fill_package_ids_from_sys(package_ids, topo->total_cores)) {
     printWarn("fill_package_ids_from_sys failed, output may be incomplete/invalid");
-    for(int i=0; i < topo->total_cores; i++) package_ids[i] = 0;
-    topo->sockets = get_num_sockets_package_cpus(topo);
-    if (topo->sockets == UNKNOWN_DATA) {
-      printWarn("get_num_sockets_package_cpus failed: assuming 1 socket");
-      topo->sockets = 1;
-    }
+    for(int i=0; i < topo->total_cores; i++) package_ids[i] = i; // assume each CPU is its own socket
+    topo->sockets = topo->total_cores;
   }
   else {
     int *package_ids_count = emalloc(sizeof(int) * topo->total_cores);
@@ -117,7 +114,8 @@ struct topology* get_topology_info(struct cache* cach) {
 
   topo->physical_cores = topo->physical_cores / topo->sockets;
   topo->logical_cores = topo->total_cores / topo->sockets;
-  topo->smt_supported = topo->logical_cores / topo->physical_cores;
+  // UltraSPARC IIIi systems have no SMT (1 thread/core). If core_ids failed we assumed 1 core per CPU.
+  topo->smt_supported = 1;
 
   free(core_ids);
   free(package_ids);
