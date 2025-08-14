@@ -596,7 +596,6 @@ bool print_cpufetch_sparc(struct cpuInfo* cpu, STYLE s, struct color** cs, struc
   char* max_frequency = get_str_freq(cpu->freq);
   char* pp = get_str_peak_performance(cpu->peak_performance);
 #if defined(ARCH_SPARC)
-  char vis_buf[64] = {0};
   if (accurate_pp_with_ops() && cpu->vis_ops_performance > 0) {
     double mops = (double)cpu->vis_ops_performance / 1e6;
     // Append " + XXXX.X MOPS" to the PP string

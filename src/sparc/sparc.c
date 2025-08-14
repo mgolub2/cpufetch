@@ -326,20 +326,24 @@ static int64_t measure_vis_ops_throughput(struct topology* topo) {
 
   typedef unsigned char v8qi __attribute__ ((vector_size (8)));
   typedef short v4hi __attribute__ ((vector_size (8)));
+  typedef unsigned char v4qi __attribute__ ((vector_size (4)));
+  typedef int v2si __attribute__ ((vector_size (8)));
 
-  volatile v8qi a = (v8qi){1,2,3,4,5,6,7,8};
-  volatile v8qi b = (v8qi){8,7,6,5,4,3,2,1};
+  volatile v4qi qa = (v4qi){1,2,3,4};
+  volatile v4qi qb = (v4qi){8,7,6,5};
   volatile v8qi c = (v8qi){0,0,0,0,0,0,0,0};
-  volatile v4hi s = (v4hi){1,1,1,1};
+  volatile v4hi s16 = (v4hi){1,1,1,1};
+  volatile v2si s32 = (v2si){11,12};
 
   if(gettimeofday(&t0, NULL) != 0) return -1;
   int ops_per_iter = 0;
   for(;;) {
     // 8-bit merges and packs approximate byte-lane throughput
-    v8qi m1 = __builtin_vis_fpmerge(a, b);   // 8 byte ops
-    v8qi p1 = __builtin_vis_fpack16(s);      // 4 half->byte ops
-    c = __builtin_vis_fpack32(s, m1);        // 8 ops
-    a = m1; b = c;
+    v8qi m1 = __builtin_vis_fpmerge(qa, qb);   // 8 byte ops
+    v4qi p1 = __builtin_vis_fpack16(s16);      // 4 half->byte ops
+    c = __builtin_vis_fpack32(s32, m1);        // 8 ops
+    qa = p1;
+    qb = (v4qi){(unsigned char)m1[0], (unsigned char)m1[2], (unsigned char)m1[4], (unsigned char)m1[6]};
     ops_per_iter = 8 + 4 + 8; // 20 OPS per iter (byte-oriented)
 
     iters++;
