@@ -589,6 +589,7 @@ bool print_cpufetch_sparc(struct cpuInfo* cpu, STYLE s, struct color** cs, struc
   char* manufacturing_process = get_str_process(cpu);
   char* max_frequency = get_str_freq(cpu->freq);
   char* pp = get_str_peak_performance(cpu->peak_performance);
+  char* features = get_str_features(cpu);
 
   setAttribute(art, ATTRIBUTE_NAME, cpu_name);
   if(cpu->hv->present) {
@@ -599,6 +600,9 @@ bool print_cpufetch_sparc(struct cpuInfo* cpu, STYLE s, struct color** cs, struc
     setAttribute(art, ATTRIBUTE_TECHNOLOGY, manufacturing_process);
   }
   setAttribute(art, ATTRIBUTE_FREQUENCY, max_frequency);
+  if (features != NULL) {
+    setAttribute(art, ATTRIBUTE_FEATURES, features);
+  }
   if (cpu->topo != NULL) {
     char* sockets = get_str_sockets(cpu->topo);
     char* n_cores = get_str_topology(cpu->topo, false);

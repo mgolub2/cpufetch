@@ -7,5 +7,6 @@ struct cpuInfo* get_cpu_info(void);
 char* get_str_topology(struct topology* topo, bool dual_socket);
 void print_debug(struct cpuInfo* cpu);
 void free_topo_struct(struct topology* topo);
+char* get_str_features(struct cpuInfo* cpu);
 
 #endif

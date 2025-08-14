@@ -24,6 +24,13 @@ static char *hv_vendors_name[] = {
   [HV_VENDOR_INVALID]   = STRING_UNKNOWN
 };
 
+static char* get_cpucaps_from_cpuinfo(void) {
+  char* caps = get_field_from_cpuinfo("cpucaps\t\t: ");
+  if (!caps) return NULL;
+  // Keep as-is; could map/format in the future
+  return caps;
+}
+
 struct cache* get_cache_info(struct cpuInfo* cpu) {
   struct cache* cach = emalloc(sizeof(struct cache));
   init_cache_struct(cach);
@@ -191,6 +198,11 @@ char* get_str_topology(struct topology* topo, bool dual_socket) {
       snprintf(string, size, "%d cores",topo->physical_cores);
   }
   return string;
+}
+
+char* get_str_features(struct cpuInfo* cpu) {
+  UNUSED(cpu);
+  return get_cpucaps_from_cpuinfo();
 }
 
 
