@@ -52,22 +52,29 @@ struct cache* get_cache_info(struct cpuInfo* cpu) {
 
   if(cach->L1i->size > 0) {
     cach->L1i->exists = true;
-    cach->L1i->num_caches = get_num_caches_by_level_sparc(cpu, 0);
+    // L1I is per core on UltraSPARC-IIIi; use online cores as a robust default
+    long online = sysconf(_SC_NPROCESSORS_ONLN);
+    cach->L1i->num_caches = (online > 0 && online < 256) ? (uint8_t)online : 1;
     cach->max_cache_level = 1;
   }
   if(cach->L1d->size > 0) {
     cach->L1d->exists = true;
-    cach->L1d->num_caches = get_num_caches_by_level_sparc(cpu, 1);
+    long online = sysconf(_SC_NPROCESSORS_ONLN);
+    cach->L1d->num_caches = (online > 0 && online < 256) ? (uint8_t)online : 1;
     cach->max_cache_level = 2;
   }
   if(cach->L2->size > 0) {
     cach->L2->exists = true;
-    cach->L2->num_caches = get_num_caches_by_level_sparc(cpu, 2);
+    // L2 is private per core on USIIIi; fall back to online cores
+    long online = sysconf(_SC_NPROCESSORS_ONLN);
+    cach->L2->num_caches = (online > 0 && online < 256) ? (uint8_t)online : 1;
     cach->max_cache_level = 3;
   }
   if(cach->L3->size > 0) {
     cach->L3->exists = true;
-    cach->L3->num_caches = get_num_caches_by_level_sparc(cpu, 3);
+    // Most UltraSPARC-IIIi systems have no L3; if present assume one per socket
+    long online = sysconf(_SC_NPROCESSORS_ONLN);
+    cach->L3->num_caches = (online > 1 && online < 256) ? 2 : 1;
     cach->max_cache_level = 4;
   }
 

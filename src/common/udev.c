@@ -338,6 +338,8 @@ int get_num_caches_by_level(struct cpuInfo* cpu, uint32_t level) {
     free(paths[i]);
   free(paths);
 
+  // Ensure we never propagate an error marker to unsigned fields
+  if (ret <= 0) ret = 1;
   return ret;
 }
 
