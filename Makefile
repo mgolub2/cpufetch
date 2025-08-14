@@ -65,7 +65,7 @@ ifneq ($(OS),Windows_NT)
 		SRC_DIR=src/sparc/
 		SOURCE += $(COMMON_SRC) $(SRC_DIR)sparc.c $(SRC_DIR)uarch.c $(SRC_DIR)udev.c
 		HEADERS += $(COMMON_HDR) $(SRC_DIR)sparc.h $(SRC_DIR)uarch.h $(SRC_DIR)udev.h
-		CFLAGS += -DARCH_SPARC -Wno-unused-parameter -std=c99 -fstack-protector-all -m64 
+		CFLAGS += -DARCH_SPARC -Wno-unused-parameter -std=c99 -fstack-protector-all -m64 -mcpu=ultrasparc3
 
 		is_vis1_flag_supported := $(shell printf 'int main(){return 0;}\n' | $(CC) -mvis -x c - -o /dev/null 2>/dev/null && echo yes)
 		ifneq ($(is_vis1_flag_supported),)
