@@ -212,7 +212,7 @@ static int64_t measure_peak_performance_f32(struct topology* topo) {
   }
   uint64_t iters = 0;
 
-#if defined(__sparc__)
+#if defined(__sparc__) && defined(CPUFETCH_GCC_VIS)
   // If VIS is available, use packed arithmetic to stress VIS pipelines
   if(sparc_has_vis_level(1)) {
     // Types from GCC VIS built-ins documentation
@@ -248,7 +248,7 @@ static int64_t measure_peak_performance_f32(struct topology* topo) {
       // Count per-iteration lane-ops conservatively once
       ops_per_iter = 4+4 + 2+2 + 8 + 4+4 + 2+2 + 8 + 8; // = 48
 
-  #if defined(__VIS__) || defined(__vis) || defined(__sparc_v9__)
+  #if defined(CPUFETCH_GCC_VIS2)
       // If compiled with VIS2 and CPU advertises it, add a couple of ops
       if(sparc_has_vis_level(2)) {
         // VIS2 byte/halfword shuffle to increase instruction mix
