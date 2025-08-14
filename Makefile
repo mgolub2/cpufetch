@@ -65,9 +65,8 @@ ifneq ($(OS),Windows_NT)
 		SRC_DIR=src/sparc/
 		SOURCE += $(COMMON_SRC) $(SRC_DIR)sparc.c $(SRC_DIR)uarch.c $(SRC_DIR)udev.c
 		HEADERS += $(COMMON_HDR) $(SRC_DIR)sparc.h $(SRC_DIR)uarch.h $(SRC_DIR)udev.h
-		CFLAGS += -DARCH_SPARC -Wno-unused-parameter -std=c99 -fstack-protector-all -mcpu=ultrasparc
+		CFLAGS += -DARCH_SPARC -Wno-unused-parameter -std=c99 -fstack-protector-all -mcpu=native -m64 
 
-		# Try enabling VIS builtins. Prefer VIS1 to avoid v9b assembler mismatches under -mcpu=ultrasparc.
 		is_vis1_flag_supported := $(shell printf 'int main(){return 0;}\n' | $(CC) -mvis -x c - -o /dev/null 2>/dev/null && echo yes)
 		ifneq ($(is_vis1_flag_supported),)
 			CFLAGS += -mvis -DCPUFETCH_GCC_VIS
