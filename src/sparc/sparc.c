@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <sys/time.h>
 #include <time.h>
 #include <assert.h>
 
@@ -172,7 +174,7 @@ static int64_t measure_peak_performance_f32(struct topology* topo) {
   const char* env = getenv("CPUFETCH_MEASURE_SP_FLOPS");
   if(env == NULL || env[0] != '1') return -1;
 
-  struct timespec t0, t1;
+  struct timeval t0, t1;
   // 50ms target runtime
   const double target_seconds = 0.05;
   volatile float a = 1.0f, b = 1.0001f, c = 0.9997f, d = 1.0003f;
@@ -180,7 +182,7 @@ static int64_t measure_peak_performance_f32(struct topology* topo) {
   uint64_t iters = 0;
   int ops_per_iter = 32; // scalar FLOPs per loop body
 
-  if(clock_gettime(CLOCK_MONOTONIC, &t0) != 0) return -1;
+  if(gettimeofday(&t0, NULL) != 0) return -1;
   for(;;) {
 #if defined(__sparc__)
     // Inline SPARC v9 single-precision math to encourage FPU throughput
@@ -221,8 +223,8 @@ static int64_t measure_peak_performance_f32(struct topology* topo) {
 #endif
     iters++;
     if((iters & 0x3FF) == 0) {
-      if(clock_gettime(CLOCK_MONOTONIC, &t1) != 0) break;
-      double elapsed = (double)(t1.tv_sec - t0.tv_sec) + (double)(t1.tv_nsec - t0.tv_nsec) / 1e9;
+      if(gettimeofday(&t1, NULL) != 0) break;
+      double elapsed = (double)(t1.tv_sec - t0.tv_sec) + (double)(t1.tv_usec - t0.tv_usec) / 1e6;
       if(elapsed >= target_seconds) {
         double flops_per_core = ((double)iters * ops_per_iter) / elapsed;
         double total_flops = flops_per_core * (double)(topo->physical_cores * topo->sockets);
