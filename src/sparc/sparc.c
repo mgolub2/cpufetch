@@ -253,15 +253,11 @@ static int64_t measure_peak_performance_f32(struct topology* topo) {
       // Count per-iteration lane-ops conservatively once
       ops_per_iter = 4+4 + 2+2 + 8 + 8 + 4 + 4+4 + 2+2; // = 42
 
-  #if defined(CPUFETCH_GCC_VIS2)
-      // If compiled with VIS2 and CPU advertises it, add a couple of ops
-      if(sparc_has_vis_level(2)) {
-        // VIS2 byte/halfword shuffle to increase instruction mix
-        v2si s0 = __builtin_vis_bshufflev2si(a32, b32); // 2 lanes (count 2)
-        a32 = s0;
-        ops_per_iter += 2;
-      }
-  #endif
+  /*
+       Note: Avoid using VIS2-only builtins (e.g., bshuffle/bmask) that
+       require assembling for v9b (e.g., -mcpu=ultrasparc3). Some toolchains
+       crash at runtime when forcing that target. Keep the loop VIS1-only.
+  */
 
       iters++;
       if((iters & 0x3FF) == 0) {

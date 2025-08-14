@@ -597,7 +597,9 @@ bool print_cpufetch_sparc(struct cpuInfo* cpu, STYLE s, struct color** cs, struc
   char* pp = get_str_peak_performance(cpu->peak_performance);
   char* features = get_str_features(cpu);
 
-  setAttribute(art, ATTRIBUTE_NAME, cpu_name);
+  if(cpu_name != NULL) {
+    setAttribute(art, ATTRIBUTE_NAME, cpu_name);
+  }
   if(cpu->hv->present) {
     setAttribute(art, ATTRIBUTE_HYPERVISOR, cpu->hv->hv_name);
   }
@@ -615,7 +617,7 @@ bool print_cpufetch_sparc(struct cpuInfo* cpu, STYLE s, struct color** cs, struc
     char* n_cores_dual = get_str_topology(cpu->topo, true);
     uint32_t socket_num = get_nsockets(cpu->topo);
     if (socket_num > 1) {
-      setAttribute(art, ATTRIBUTE_SOCKETS, sockets);
+      if (sockets != NULL) setAttribute(art, ATTRIBUTE_SOCKETS, sockets);
       setAttribute(art, ATTRIBUTE_NCORES, n_cores);
       setAttribute(art, ATTRIBUTE_NCORES_DUAL, n_cores_dual);
     } else {
@@ -655,6 +657,8 @@ bool print_cpufetch_sparc(struct cpuInfo* cpu, STYLE s, struct color** cs, struc
   if(cpu->topo != NULL) free_topo_struct(cpu->topo);
   free_freq_struct(cpu->freq);
   free_cpuinfo_struct(cpu);
+  free(art->attributes);
+  free(art);
   return true;
 }
 #endif
