@@ -72,6 +72,12 @@ ifneq ($(OS),Windows_NT)
 		is_vis1_flag_supported := $(shell printf 'int main(){return 0;}\n' | $(CC) -mvis -x c - -o /dev/null 2>/dev/null && echo yes)
 		ifneq ($(is_vis2_flag_supported),)
 			CFLAGS += -mvis2 -mvis -DCPUFETCH_GCC_VIS -DCPUFETCH_GCC_VIS2
+			# VIS2 instructions (e.g. bmask/bshuffle) require v9b ISA in the assembler.
+			# Prefer ultrasparc3 (v9b) when supported to avoid arch mismatch during assembly.
+			is_ultrasparc3_supported := $(shell printf 'int main(){return 0;}\n' | $(CC) -mcpu=ultrasparc3 -x c - -o /dev/null 2>/dev/null && echo yes)
+			ifneq ($(is_ultrasparc3_supported),)
+				CFLAGS += -mcpu=ultrasparc3
+			endif
 		else ifneq ($(is_vis1_flag_supported),)
 			CFLAGS += -mvis -DCPUFETCH_GCC_VIS
 		endif
