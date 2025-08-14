@@ -65,11 +65,11 @@ ifneq ($(OS),Windows_NT)
 		SRC_DIR=src/sparc/
 		SOURCE += $(COMMON_SRC) $(SRC_DIR)sparc.c $(SRC_DIR)uarch.c $(SRC_DIR)udev.c
 		HEADERS += $(COMMON_HDR) $(SRC_DIR)sparc.h $(SRC_DIR)uarch.h $(SRC_DIR)udev.h
-		CFLAGS += -DARCH_SPARC -Wno-unused-parameter -std=c99 -fstack-protector-all -xarch=v9b
+		CFLAGS += -DARCH_SPARC -Wno-unused-parameter -std=c99 -fstack-protector-all -mcpu=v9
 
 		# Try enabling VIS builtins if the compiler supports them. Non-fatal if not.
-		is_vis2_flag_supported := $(shell printf 'int main(){return 0;}\n' | $(CC) -mvis2 -x c - -o /dev/null 2>/dev/null && echo yes)
-		is_vis1_flag_supported := $(shell printf 'int main(){return 0;}\n' | $(CC) -mvis -x c - -o /dev/null 2>/dev/null && echo yes)
+		is_vis2_flag_supported := yes #$(shell printf 'int main(){return 0;}\n' | $(CC) -mvis2 -x c - -o /dev/null 2>/dev/null && echo yes)
+		is_vis1_flag_supported := yes #$(shell printf 'int main(){return 0;}\n' | $(CC) -mvis -x c - -o /dev/null 2>/dev/null && echo yes)
 		ifneq ($(is_vis2_flag_supported),)
 			CFLAGS += -mvis2 -DCPUFETCH_GCC_VIS -DCPUFETCH_GCC_VIS2
 		else ifneq ($(is_vis1_flag_supported),)
