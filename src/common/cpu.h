@@ -177,6 +177,7 @@ struct cpuInfo {
   uint32_t core_type;
 #elif ARCH_PPC
   uint32_t pvr;
+  int64_t vis_ops_performance; // Reuse field name for simplicity: vector byte ops (AltiVec) throughput
 #elif ARCH_ARM
   // Main ID register
   uint32_t midr;

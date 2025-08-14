@@ -250,6 +250,13 @@ char* build_short_options(void) {
   c[ARG_MEASURE_MAX_FREQ],
   c[ARG_DEBUG], c[ARG_VERBOSE],
   c[ARG_VERSION]);
+#elif ARCH_PPC
+  sprintf(str, "%c:%c:%c%c%c%c%c%c%c",
+  c[ARG_STYLE], c[ARG_COLOR], c[ARG_HELP],
+  c[ARG_LOGO_SHORT], c[ARG_LOGO_LONG],
+  c[ARG_ACCURATE_PP],
+  c[ARG_DEBUG], c[ARG_VERBOSE],
+  c[ARG_VERSION]);
 #else
   sprintf(str, "%c:%c:%c%c%c%c%c%c",
   c[ARG_STYLE], c[ARG_COLOR], c[ARG_HELP],
@@ -300,6 +307,8 @@ bool parse_args(int argc, char* argv[]) {
 #elif ARCH_SPARC
     {args_str[ARG_ACCURATE_PP],      no_argument,       0, args_chr[ARG_ACCURATE_PP]      },
     {args_str[ARG_ACCURATE_PP_WITH_OPS], no_argument,   0, args_chr[ARG_ACCURATE_PP_WITH_OPS] },
+#elif ARCH_PPC
+    {args_str[ARG_ACCURATE_PP],      no_argument,       0, args_chr[ARG_ACCURATE_PP]      },
 #endif
     {args_str[ARG_LOGO_SHORT],       no_argument,       0, args_chr[ARG_LOGO_SHORT]       },
     {args_str[ARG_LOGO_LONG],        no_argument,       0, args_chr[ARG_LOGO_LONG]        },

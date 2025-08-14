@@ -40,6 +40,12 @@ ifneq ($(OS),Windows_NT)
 		SOURCE += $(COMMON_SRC) $(SRC_DIR)ppc.c $(SRC_DIR)uarch.c $(SRC_DIR)udev.c
 		HEADERS += $(COMMON_HDR) $(SRC_DIR)ppc.h $(SRC_DIR)uarch.h  $(SRC_DIR)udev.c
 		CFLAGS += -DARCH_PPC -std=gnu99 -fstack-protector-all -Wno-language-extension-token
+
+		# Try enabling AltiVec if compiler supports it
+		is_altivec_flag_supported := $(shell printf 'int main(){return 0;}\n' | $(CC) -maltivec -x c - -o /dev/null 2>/dev/null && echo yes)
+		ifneq ($(is_altivec_flag_supported),)
+			CFLAGS += -maltivec -DCPUFETCH_ALTIVEC
+		endif
 	else ifeq ($(arch), $(filter $(arch), arm aarch64_be aarch64 arm64 armv8b armv8l armv7l armv6l))
 		SRC_DIR=src/arm/
 		SOURCE += $(COMMON_SRC) $(SRC_DIR)midr.c $(SRC_DIR)uarch.c $(SRC_COMMON)soc.c $(SRC_DIR)soc.c $(SRC_COMMON)pci.c $(SRC_DIR)udev.c sve.o

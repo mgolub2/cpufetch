@@ -163,7 +163,64 @@ struct frequency* get_frequency_info(void) {
   return freq;
 }
 
+static int64_t measure_fp32_flops(struct topology* topo) {
+  if(!accurate_pp()) return -1;
+  struct timeval t0, t1;
+  double target_seconds = 1.0;
+  volatile float a=1.0f,b=1.0001f,c=0.9997f,d=1.0003f;
+  uint64_t iters=0; int ops_per_iter=32;
+  if(gettimeofday(&t0,NULL)!=0) return -1;
+  for(;;){
+    a=a+b; b=b*c; c=c+d; d=d*a;
+    a=a+b; b=b*c; c=c+d; d=d*a;
+    a=a+b; b=b*c; c=c+d; d=d*a;
+    a=a+b; b=b*c; c=c+d; d=d*a;
+    iters++;
+    if((iters&0x3FF)==0){
+      if(gettimeofday(&t1,NULL)!=0) break;
+      double e=(double)(t1.tv_sec-t0.tv_sec)+(double)(t1.tv_usec-t0.tv_usec)/1e6;
+      if(e>=target_seconds){
+        double per_core=((double)iters*ops_per_iter)/e;
+        double total=per_core*(double)(topo->physical_cores*topo->sockets);
+        if(total<=0.0) return -1; return (int64_t)total;
+      }
+    }
+  }
+  return -1;
+}
+
+#if defined(CPUFETCH_ALTIVEC)
+static int64_t measure_altivec_ops(struct topology* topo){
+  if(!accurate_pp_with_ops()) return -1;
+  struct timeval t0,t1; double target_seconds=0.6; uint64_t iters=0; int ops_per_iter=0;
+  typedef vector unsigned char v16u8;
+  v16u8 a = (v16u8){1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+  v16u8 b = (v16u8){16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1};
+  v16u8 c = (v16u8){0};
+  if(gettimeofday(&t0,NULL)!=0) return -1;
+  for(;;){
+    v16u8 m = vec_perm(a,b,(v16u8){0,16,2,18,4,20,6,22,8,24,10,26,12,28,14,30}); // 16 byte ops
+    c = vec_avg(m,b); // 16 ops
+    a = c; b = m;
+    ops_per_iter = 32;
+    iters++;
+    if((iters&0x3FF)==0){
+      if(gettimeofday(&t1,NULL)!=0) break;
+      double e=(double)(t1.tv_sec-t0.tv_sec)+(double)(t1.tv_usec-t0.tv_usec)/1e6;
+      if(e>=target_seconds){
+        double per_core=((double)iters*ops_per_iter)/e;
+        double total=per_core*(double)(topo->physical_cores*topo->sockets);
+        if(total<=0.0) return -1; return (int64_t)total;
+      }
+    }
+  }
+  return -1;
+}
+#endif
+
 int64_t get_peak_performance(struct cpuInfo* cpu, struct topology* topo, int64_t freq) {
+  int64_t measured = measure_fp32_flops(topo);
+  if(measured > 0) return measured;
   /*
    * Not sure about this
    * PP(SP) = N_CORES * FREQUENCY * 4(If altivec)
@@ -236,6 +293,9 @@ struct cpuInfo* get_cpu_info(void) {
   cpu->cach = get_cache_info(cpu);
   feat->altivec = has_altivec(cpu->arch);
   cpu->peak_performance = get_peak_performance(cpu, cpu->topo, get_freq(cpu->freq));
+#if defined(CPUFETCH_ALTIVEC)
+  cpu->vis_ops_performance = accurate_pp_with_ops() ? measure_altivec_ops(cpu->topo) : -1;
+#endif
 
   return cpu;
 }
