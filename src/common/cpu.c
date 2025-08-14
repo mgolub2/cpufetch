@@ -16,6 +16,8 @@
   #include "../arm/uarch.h"
 #elif ARCH_RISCV
   #include "../riscv/uarch.h"
+#elif ARCH_SPARC
+  #include "../sparc/uarch.h"
 #endif
 
 #define STRING_YES        "Yes"
@@ -40,7 +42,7 @@ int64_t get_freq_pp(struct frequency* freq) {
 }
 #endif
 
-#if defined(ARCH_X86) || defined(ARCH_PPC)
+#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC)
 char* get_str_cpu_name(struct cpuInfo* cpu, bool fcpuname) {
   #ifdef ARCH_X86
   if(!fcpuname) {
@@ -201,7 +203,7 @@ char* get_str_peak_performance(int64_t flops) {
 void init_topology_struct(struct topology* topo, struct cache* cach) {
   topo->total_cores = 0;
   topo->cach = cach;
-#if defined(ARCH_X86) || defined(ARCH_PPC)
+#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC)
   topo->physical_cores = 0;
   topo->logical_cores = 0;
   topo->smt_supported = 0;

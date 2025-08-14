@@ -26,6 +26,9 @@
   #include "../riscv/riscv.h"
   #include "../riscv/uarch.h"
   #include "../riscv/soc.h"
+#elif ARCH_SPARC
+  #include "../sparc/sparc.h"
+  #include "../sparc/uarch.h"
 #endif
 
 #ifdef _WIN32
@@ -46,7 +49,7 @@
 #define MAX_TERM_SIZE       1024
 
 enum {
-#if defined(ARCH_X86) || defined(ARCH_PPC)
+#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC)
   ATTRIBUTE_NAME,
 #elif defined(ARCH_ARM) || defined(ARCH_RISCV)
   ATTRIBUTE_SOC,
@@ -84,6 +87,8 @@ static const char* ATTRIBUTE_FIELDS [] = {
   "Name:",
 #elif ARCH_PPC
   "Part Number:",
+#elif ARCH_SPARC
+  "Name:",
 #elif defined(ARCH_ARM) || defined(ARCH_RISCV)
   "SoC:",
 #endif
@@ -120,6 +125,8 @@ static const char* ATTRIBUTE_FIELDS_SHORT [] = {
   "Name:",
 #elif ARCH_PPC
   "P/N:",
+#elif ARCH_SPARC
+  "Name:",
 #elif ARCH_ARM
   "SoC:",
 #endif
@@ -416,6 +423,8 @@ void choose_ascii_art(struct ascii* art, struct color** cs, struct terminal* ter
     art->art = &logo_spacemit;
   else
     art->art = &logo_riscv;
+#elif ARCH_SPARC
+  art->art = choose_ascii_art_aux(&logo_ibm_l, &logo_ibm, term, lf);
 #endif
 
   // 2. Choose colors
@@ -484,7 +493,7 @@ uint32_t longest_field_length(struct ascii* art, int la) {
   return max;
 }
 
-#if defined(ARCH_X86) || defined(ARCH_PPC)
+#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC)
 void print_ascii_generic(struct ascii* art, uint32_t la, int32_t termw, const char** attribute_fields, bool hybrid_architecture) {
   struct ascii_logo* logo = art->art;
   int attr_to_print = 0;
@@ -566,6 +575,71 @@ void print_ascii_generic(struct ascii* art, uint32_t la, int32_t termw, const ch
 
   free(lbuf->buf);
   free(lbuf);
+}
+#endif
+
+#ifdef ARCH_SPARC
+bool print_cpufetch_sparc(struct cpuInfo* cpu, STYLE s, struct color** cs, struct terminal* term, bool fcpuname) {
+  struct ascii* art = set_ascii(get_cpu_vendor(cpu), s);
+  if(art == NULL)
+    return false;
+
+  char* cpu_name = get_str_cpu_name(cpu, fcpuname);
+  char* uarch = get_str_uarch(cpu);
+  char* manufacturing_process = get_str_process(cpu);
+  char* max_frequency = get_str_freq(cpu->freq);
+  char* pp = get_str_peak_performance(cpu->peak_performance);
+
+  setAttribute(art, ATTRIBUTE_NAME, cpu_name);
+  if(cpu->hv->present) {
+    setAttribute(art, ATTRIBUTE_HYPERVISOR, cpu->hv->hv_name);
+  }
+  setAttribute(art, ATTRIBUTE_UARCH, uarch);
+  setAttribute(art, ATTRIBUTE_TECHNOLOGY, manufacturing_process);
+  setAttribute(art, ATTRIBUTE_FREQUENCY, max_frequency);
+  if (cpu->topo != NULL) {
+    char* sockets = get_str_sockets(cpu->topo);
+    char* n_cores = get_str_topology(cpu->topo, false);
+    char* n_cores_dual = get_str_topology(cpu->topo, true);
+    uint32_t socket_num = get_nsockets(cpu->topo);
+    if (socket_num > 1) {
+      setAttribute(art, ATTRIBUTE_SOCKETS, sockets);
+      setAttribute(art, ATTRIBUTE_NCORES, n_cores);
+      setAttribute(art, ATTRIBUTE_NCORES_DUAL, n_cores_dual);
+    } else {
+      setAttribute(art, ATTRIBUTE_NCORES, n_cores);
+    }
+  }
+  if(cpu->cach != NULL) {
+    char* l1i = get_str_l1i(cpu->cach);
+    char* l1d = get_str_l1d(cpu->cach);
+    char* l2 = get_str_l2(cpu->cach);
+    char* l3 = get_str_l3(cpu->cach);
+    if(l1i != NULL) setAttribute(art, ATTRIBUTE_L1i, l1i);
+    if(l1d != NULL) setAttribute(art, ATTRIBUTE_L1d, l1d);
+    if(l2 != NULL) setAttribute(art, ATTRIBUTE_L2, l2);
+    if(l3 != NULL) setAttribute(art, ATTRIBUTE_L3, l3);
+  }
+  setAttribute(art, ATTRIBUTE_PEAK, pp);
+
+  const char** attribute_fields = ATTRIBUTE_FIELDS;
+  uint32_t longest_attribute = longest_attribute_length(art, attribute_fields);
+  uint32_t longest_field = longest_field_length(art, longest_attribute);
+  choose_ascii_art(art, cs, term, longest_field);
+
+  if(!ascii_fits_screen(term->w, *art->art, longest_field)) {
+    attribute_fields = ATTRIBUTE_FIELDS_SHORT;
+    longest_attribute = longest_attribute_length(art, attribute_fields);
+  }
+
+  print_ascii_generic(art, longest_attribute, term->w, attribute_fields, false);
+
+  if(cs != NULL) free_colors_struct(cs);
+  if(cpu->cach != NULL) free_cache_struct(cpu->cach);
+  if(cpu->topo != NULL) free_topo_struct(cpu->topo);
+  free_freq_struct(cpu->freq);
+  free_cpuinfo_struct(cpu);
+  return true;
 }
 #endif
 
@@ -1147,5 +1221,7 @@ bool print_cpufetch(struct cpuInfo* cpu, STYLE s, struct color** cs, bool show_f
   return print_cpufetch_arm(cpu, s, cs, term);
 #elif ARCH_RISCV
   return print_cpufetch_riscv(cpu, s, cs, term);
+#elif ARCH_SPARC
+  return print_cpufetch_sparc(cpu, s, cs, term, show_full_cpu_name);
 #endif
 }
