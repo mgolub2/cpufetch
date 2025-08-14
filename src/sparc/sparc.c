@@ -1,3 +1,8 @@
+// Ensure SPARC-specific fields are visible to static analysis
+#ifndef ARCH_SPARC
+#define ARCH_SPARC 1
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,12 +11,14 @@
 #include <sys/time.h>
 #include <time.h>
 #include <assert.h>
+#include <errno.h>
 
 #include "sparc.h"
 #include "uarch.h"
 #include "udev.h"
 #include "../common/udev.h"
 #include "../common/global.h"
+#include "../common/args.h"
 
 static char *hv_vendors_name[] = {
   [HV_VENDOR_KVM]       = "KVM",
@@ -172,11 +179,19 @@ struct frequency* get_frequency_info(void) {
 // then scale by total cores. Enabled only if CPUFETCH_MEASURE_SP_FLOPS=1.
 static int64_t measure_peak_performance_f32(struct topology* topo) {
   const char* env = getenv("CPUFETCH_MEASURE_SP_FLOPS");
-  if(env == NULL || env[0] != '1') return -1;
+  bool enabled = accurate_pp() || (env != NULL && env[0] == '1');
+  if(!enabled) return -1;
 
   struct timeval t0, t1;
-  // 50ms target runtime
-  const double target_seconds = 0.05;
+  // Short runtime to avoid long blocking; increase via env if needed
+  double target_seconds = 0.6;
+  if(env != NULL && env[0] == '1') {
+    const char* dur = getenv("CPUFETCH_MEASURE_SP_FLOPS_SECS");
+    if(dur != NULL) {
+      double v = atof(dur);
+      if(v > 0.05 && v < 30.0) target_seconds = v;
+    }
+  }
   volatile float a = 1.0f, b = 1.0001f, c = 0.9997f, d = 1.0003f;
   volatile float e = 0.5f, f = 1.5f, g = 2.0f, h = -0.25f;
   uint64_t iters = 0;

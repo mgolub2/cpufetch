@@ -289,6 +289,8 @@ bool parse_args(int argc, char* argv[]) {
     {args_str[ARG_RAW],              no_argument,       0, args_chr[ARG_RAW]              },
 #elif ARCH_ARM
     {args_str[ARG_MEASURE_MAX_FREQ], no_argument,       0, args_chr[ARG_MEASURE_MAX_FREQ] },
+#elif ARCH_SPARC
+    {args_str[ARG_ACCURATE_PP],      no_argument,       0, args_chr[ARG_ACCURATE_PP]      },
 #endif
     {args_str[ARG_LOGO_SHORT],       no_argument,       0, args_chr[ARG_LOGO_SHORT]       },
     {args_str[ARG_LOGO_LONG],        no_argument,       0, args_chr[ARG_LOGO_LONG]        },
@@ -386,9 +388,9 @@ bool parse_args(int argc, char* argv[]) {
     args.logo_long = false;
   }
 
-#if defined(ARCH_X86) && ! defined(__linux__)
+#if (defined(ARCH_X86) || defined(ARCH_SPARC)) && ! defined(__linux__)
   if(args.accurate_pp) {
-    printWarn("%s option is valid only in Linux x86_64", args_str[ARG_ACCURATE_PP]);
+    printWarn("%s option is valid only in Linux", args_str[ARG_ACCURATE_PP]);
     args.help_flag  = true;
   }
 #endif
