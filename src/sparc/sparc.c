@@ -219,7 +219,7 @@ static int64_t measure_peak_performance_f32(struct topology* topo) {
   }
   uint64_t iters = 0;
 
-#if defined(__sparc__) && defined(CPUFETCH_GCC_VIS)
+#if 0
   // If VIS is available, use packed arithmetic to stress VIS pipelines
   if(sparc_has_vis_level(1)) {
     // Types from GCC VIS built-ins documentation
