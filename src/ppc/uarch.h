@@ -2,6 +2,7 @@
 #define __UARCH__
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "ppc.h"
 
 struct uarch;

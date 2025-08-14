@@ -1,3 +1,8 @@
+// Ensure PPC-specific fields are visible to static analysis
+#ifndef ARCH_PPC
+#define ARCH_PPC 1
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdlib.h>

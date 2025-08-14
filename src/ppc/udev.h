@@ -2,6 +2,7 @@
 #define __UDEV_PPC__
 
 #include "../common/udev.h"
+#include <stdbool.h>
 #define _PATH_DT                  "/proc/device-tree/vpd/root-node-vpd@a000/enclosure@1e00/backplane@800/processor@1000"
 #define _PATH_DT_PART             "/part-number"
 #define _PATH_DT_IBM_PARTIT_NAME  "/device-tree/ibm,partition-name"
