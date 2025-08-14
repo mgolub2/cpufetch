@@ -45,10 +45,10 @@ struct cache* get_cache_info(struct cpuInfo* cpu) {
   struct cache* cach = emalloc(sizeof(struct cache));
   init_cache_struct(cach);
 
-  cach->L1i->size = get_l1i_cache_size(0);
-  cach->L1d->size = get_l1d_cache_size(0);
-  cach->L2->size = get_l2_cache_size(0);
-  cach->L3->size = get_l3_cache_size(0);
+  cach->L1i->size = get_l1i_cache_size_sparc(0);
+  cach->L1d->size = get_l1d_cache_size_sparc(0);
+  cach->L2->size = get_l2_cache_size_sparc(0);
+  cach->L3->size = get_l3_cache_size_sparc(0);
 
   if(cach->L1i->size > 0) {
     cach->L1i->exists = true;

@@ -8,6 +8,11 @@
 #define _PATH_TOPO_CORE_ID         "topology/core_id"
 #define _PATH_TOPO_PACKAGE_ID      "topology/physical_package_id"
 #define CPUINFO_FREQUENCY_STR_HEX  "Cpu0ClkTck\t: "
+// Common cpuinfo cache fields (Linux SPARC)
+#define CPUINFO_L1I_STR            "I$\t\t\t: "
+#define CPUINFO_L1D_STR            "D$\t\t\t: "
+#define CPUINFO_L2_STR             "L2$\t\t\t: "
+#define CPUINFO_L3_STR             "L3$\t\t\t: "
 
 static bool fill_array_from_sys(int *ids, int total_cores, char* SYS_PATH) {
   int filelen;
@@ -79,5 +84,44 @@ long get_frequency_from_cpuinfo(void) {
   long mhz = (long)(hz / 1000000ULL);
   if(mhz > 10000 || mhz < 100) return UNKNOWN_DATA;
   return mhz;
+}
+
+static long parse_cache_kb_from_cpuinfo(char* field) {
+  char* line = get_field_from_cpuinfo(field);
+  if(line == NULL) return -1;
+  // Expect values like: "64K" or "1024K" possibly with text
+  // Trim at first space
+  for(int i=0; line[i]; i++) { if(line[i] == ' ' || line[i] == '\t') { line[i] = '\0'; break; } }
+  char* end;
+  errno = 0;
+  long val = strtol(line, &end, 10);
+  free(line);
+  if(errno != 0) return -1;
+  return val * 1024; // convert KB to bytes
+}
+
+// SPARC-specific cache size getters. Prefer cpuinfo on SPARC; fall back to sysfs via common helpers.
+long get_l1i_cache_size_sparc(uint32_t core) {
+  long v = parse_cache_kb_from_cpuinfo(CPUINFO_L1I_STR);
+  if(v > 0) return v;
+  return get_l1i_cache_size(core);
+}
+
+long get_l1d_cache_size_sparc(uint32_t core) {
+  long v = parse_cache_kb_from_cpuinfo(CPUINFO_L1D_STR);
+  if(v > 0) return v;
+  return get_l1d_cache_size(core);
+}
+
+long get_l2_cache_size_sparc(uint32_t core) {
+  long v = parse_cache_kb_from_cpuinfo(CPUINFO_L2_STR);
+  if(v > 0) return v;
+  return get_l2_cache_size(core);
+}
+
+long get_l3_cache_size_sparc(uint32_t core) {
+  long v = parse_cache_kb_from_cpuinfo(CPUINFO_L3_STR);
+  if(v > 0) return v;
+  return get_l3_cache_size(core);
 }
 
