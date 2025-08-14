@@ -218,66 +218,7 @@ static int64_t measure_peak_performance_f32(struct topology* topo) {
   }
   uint64_t iters = 0;
 
-#if 0
-  // If VIS is available, use packed arithmetic to stress VIS pipelines
-  if(sparc_has_vis_level(1)) {
-    // Types from GCC VIS built-ins documentation
-    typedef int v2si __attribute__ ((vector_size (8)));
-    typedef short v4hi __attribute__ ((vector_size (8)));
-    typedef unsigned char v8qi __attribute__ ((vector_size (8)));
-    typedef unsigned char v4qi __attribute__ ((vector_size (4)));
-
-    volatile v4hi a16 = (v4hi){1,2,3,4};
-    volatile v4hi b16 = (v4hi){5,6,7,8};
-    volatile v2si a32 = (v2si){11,12};
-    volatile v2si b32 = (v2si){13,14};
-    volatile v4qi qa4 = (v4qi){1,2,3,4};
-    volatile v4qi qb4 = (v4qi){8,7,6,5};
-    volatile v8qi acc8 = (v8qi){0,0,0,0,0,0,0,0};
-
-    int ops_per_iter = 0;
-    if(gettimeofday(&t0, NULL) != 0) return -1;
-    for(;;) {
-      // VIS 1.0 packed add/sub (each op works on lanes)
-      v4hi t0_16 = __builtin_vis_fpadd16(a16, b16);   // 4 ops
-      v4hi t1_16 = __builtin_vis_fpsub16(b16, a16);   // 4 ops
-      v2si t0_32 = __builtin_vis_fpadd32(a32, b32);   // 2 ops
-      v2si t1_32 = __builtin_vis_fpsub32(b32, a32);   // 2 ops
-      v8qi t2_8  = __builtin_vis_fpack32(t0_32, acc8); // 8 ops
-      v8qi mrg8  = __builtin_vis_fpmerge(qa4, qb4);   // 8 ops
-      v4qi pk16  = __builtin_vis_fpack16(t0_16);      // 4 ops
-      // Mix results to reduce dependencies and keep live
-      a16 = __builtin_vis_fpadd16(t0_16, t1_16);      // 4 ops
-      b16 = __builtin_vis_fpsub16(t1_16, t0_16);      // 4 ops
-      a32 = __builtin_vis_fpadd32(t0_32, t1_32);      // 2 ops
-      b32 = __builtin_vis_fpsub32(t1_32, t0_32);      // 2 ops
-      acc8 = t2_8;
-      qa4 = pk16;                                     // keep pk16 live
-      qb4 = (v4qi){(unsigned char)mrg8[0], (unsigned char)mrg8[2], (unsigned char)mrg8[4], (unsigned char)mrg8[6]};
-
-      // Count per-iteration lane-ops conservatively once
-      ops_per_iter = 4+4 + 2+2 + 8 + 8 + 4 + 4+4 + 2+2; // = 42
-
-  /*
-       Note: Avoid using VIS2-only builtins (e.g., bshuffle/bmask) that
-       require assembling for v9b (e.g., -mcpu=ultrasparc3). Some toolchains
-       crash at runtime when forcing that target. Keep the loop VIS1-only.
-  */
-
-      iters++;
-      if((iters & 0x3FF) == 0) {
-        if(gettimeofday(&t1, NULL) != 0) break;
-        double elapsed = (double)(t1.tv_sec - t0.tv_sec) + (double)(t1.tv_usec - t0.tv_usec) / 1e6;
-        if(elapsed >= target_seconds) {
-          double ops_per_core = ((double)iters * ops_per_iter) / elapsed;
-          double total_ops = ops_per_core * (double)(topo->physical_cores * topo->sockets);
-          if(total_ops <= 0.0) return -1;
-          return (int64_t) total_ops;
-        }
-      }
-    }
-  }
-#endif
+  
 
   // Fallback: scalar FP32 loop if VIS is not present
   volatile float a = 1.0f, b = 1.0001f, c = 0.9997f, d = 1.0003f;
@@ -343,7 +284,7 @@ static int64_t measure_vis_ops_throughput(struct topology* topo) {
     v4qi p1 = __builtin_vis_fpack16(s16);      // 4 half->byte ops
     c = __builtin_vis_fpack32(s32, m1);        // 8 ops
     qa = p1;
-    qb = (v4qi){(unsigned char)m1[0], (unsigned char)m1[2], (unsigned char)m1[4], (unsigned char)m1[6]};
+    qb = (v4qi){(unsigned char)(m1[0] + c[0]), (unsigned char)m1[2], (unsigned char)m1[4], (unsigned char)m1[6]};
     ops_per_iter = 8 + 4 + 8; // 20 OPS per iter (byte-oriented)
 
     iters++;
