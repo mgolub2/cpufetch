@@ -611,10 +611,14 @@ bool print_cpufetch_sparc(struct cpuInfo* cpu, STYLE s, struct color** cs, struc
     }
   }
   if(cpu->cach != NULL) {
-    char* l1i = get_str_l1i(cpu->cach);
-    char* l1d = get_str_l1d(cpu->cach);
-    char* l2 = get_str_l2(cpu->cach);
-    char* l3 = get_str_l3(cpu->cach);
+    char* l1i = NULL;
+    char* l1d = NULL;
+    char* l2 = NULL;
+    char* l3 = NULL;
+    if (cpu->cach->L1i != NULL && cpu->cach->L1i->exists) l1i = get_str_l1i(cpu->cach);
+    if (cpu->cach->L1d != NULL && cpu->cach->L1d->exists) l1d = get_str_l1d(cpu->cach);
+    if (cpu->cach->L2  != NULL && cpu->cach->L2->exists)  l2  = get_str_l2(cpu->cach);
+    if (cpu->cach->L3  != NULL && cpu->cach->L3->exists)  l3  = get_str_l3(cpu->cach);
     if(l1i != NULL) setAttribute(art, ATTRIBUTE_L1i, l1i);
     if(l1d != NULL) setAttribute(art, ATTRIBUTE_L1d, l1d);
     if(l2 != NULL) setAttribute(art, ATTRIBUTE_L2, l2);
@@ -667,7 +671,7 @@ bool print_cpufetch_x86(struct cpuInfo* cpu, STYLE s, struct color** cs, struct 
   char* manufacturing_process = get_str_process(cpu);
   bool hybrid_architecture = cpu->next_cpu != NULL;
 
-  if(cpu->cach != NULL) {
+  if(cpu->cach != NULL && cpu->cach->L3 != NULL && cpu->cach->L3->exists) {
     l3 = get_str_l3(cpu->cach);
   }
 
