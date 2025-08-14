@@ -466,25 +466,57 @@ $C1       :####:              \
 $C1         :##:              "
 
 // SUN/UltraSPARC short logo (monospace, 18x16) - diamond shape, adjusted spacing
+/*
+       /\
+      /  \
+     /\ \ \
+    /\ \ \ \
+   /\ \ \ \/\
+  / /\ \ \/ /\
+ / / /\  / / /\
+/ / /  \/ / /  \
+\  / / /\  / / /
+ \/ / /  \/ / /
+  \/ /\ \ \/ /
+   \/\ \ \ \/
+    \ \ \ \/
+     \ \ \/
+      \  /
+       \/
+
+*/
 #define ASCII_SUN \
 "$C1       /\\              \
-$C1      /  \\             \
-$C1     /\\ \\ \\            \
-$C1    /\\ \\ \\ \\           \
-$C1   /\\ \\ \\ \\/\\          \
-$C1  / /\\ \\ \\/ /\\         \
-$C1 / / /\\  / / /\\        \
-$C1/ / /  \\/ / /  \\       \
-$C1\\  / / /\\  / / /       \
-$C1 \\/ / /  \\/ / /        \
-$C1  \\/ /\\ \\ \\/ /         \
-$C1   \\/\\ \\ \\ \\/          \
-$C1    \\ \\ \\ \\/           \
-$C1     \\ \\ \\/            \
-$C1      \\  /             \
-$C1       \\/              "
+ $C1      /  \\             \
+ $C1     /\\ \\ \\            \
+ $C1    /\\ \\ \\ \\           \
+ $C1   /\\ \\ \\ \\/\\          \
+ $C1  / /\\ \\ \\/ /\\         \
+ $C1 / / /\\  / / /\\        \
+ $C1/ / /  \\/ / /  \\       \
+ $C1\\  / / /\\  / / /       \
+ $C1 \\/ / /  \\/ / /        \
+ $C1  \\/ /\\ \\ \\/ /         \
+ $C1   \\/\\ \\ \\ \\/          \
+ $C1    \\ \\ \\ \\/           \
+ $C1     \\ \\ \\/            \
+ $C1      \\  /             \
+ $C1       \\/              "
+
 
 // --------------------- LONG LOGOS ------------------------- //
+#define ASCII_SUN_L \
+"$C1################    #              #    #              #    #              #    ################    \
+$C1#               #    #              #    #              #    #              #    #              #    \
+$C1#               #    #              #    #              #    #              #    #              #    \
+$C1############### #    #              #    #              #    #              #    #              #    \
+$C1              # #    #              #    #              #    #              #    #              #    \
+$C1              # #    #              #    #              #    #              #    #              #    \
+$C1############### #    #              #    #              #    #              #    #              #    \
+$C1#               #    #              #    #              #    #              #    #              #    \
+$C1#               #    #              #    #              #    #              #    #              #    \
+$C1################    ################    ################    ################    #              #    \
+$C1                      MICROSYSTEMS                                                 "
 #define ASCII_AMD_L \
 "$C1                                                              \
 $C1                                                              \
@@ -665,6 +697,7 @@ asciiL logo_amlogic     = { ASCII_AMLOGIC,     58,  8, false, {C_FG_BLUE},      
 asciiL logo_marvell     = { ASCII_MARVELL,     56, 10, false, {C_FG_B_BLACK},                                 {C_FG_B_BLACK, C_FG_B_WHITE} };
 asciiL logo_spacemit    = { ASCII_SPACEMIT,    27, 18, false, {C_FG_B_GREEN},                                 {C_FG_B_GREEN, C_FG_B_WHITE} };
 asciiL logo_sun         = { ASCII_SUN,         18, 16, false, {C_FG_MAGENTA},                                 {C_FG_MAGENTA, C_FG_WHITE}   };
+asciiL logo_sun_l       = { ASCII_SUN_L,      100, 11, false, {C_FG_MAGENTA},                                 {C_FG_MAGENTA, C_FG_WHITE}   };
 
 // Long variants          | ----------------------------------------------------------------------------------------------------------------|
 asciiL logo_amd_l       = { ASCII_AMD_L,       62, 19, true,  {C_BG_WHITE, C_BG_GREEN},                       {C_FG_WHITE, C_FG_GREEN}     };
