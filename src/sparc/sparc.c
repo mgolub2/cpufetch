@@ -129,8 +129,27 @@ struct topology* get_topology_info(struct cache* cach) {
 static char* get_cpu_name_from_cpuinfo(void) {
   // Debian sparc64 uses "cpu\t\t: UltraSparc ..." or similar; fall back to model name if present
   char* model = get_field_from_cpuinfo("cpu\t\t: ");
-  if (model != NULL) return model;
-  return get_field_from_cpuinfo("model name\t: ");
+  if (model == NULL) {
+    model = get_field_from_cpuinfo("model name\t: ");
+  }
+  if (model == NULL) return NULL;
+
+  // Normalize some common SPARC strings
+  // 1) UltraSparc -> UltraSPARC
+  char* pos = strstr(model, "UltraSparc");
+  if (pos != NULL) {
+    memcpy(pos, "UltraSPARC", strlen("UltraSPARC"));
+  }
+  // 2) TI UltraSPARC* -> Sun UltraSPARC*
+  if (strncmp(model, "TI ", 3) == 0) {
+    size_t len = strlen(model);
+    char* fixed = ecalloc(len + 1, sizeof(char));
+    strcpy(fixed, "Sun ");
+    strcpy(fixed + 4, model + 3);
+    free(model);
+    model = fixed;
+  }
+  return model;
 }
 
 struct frequency* get_frequency_info(void) {

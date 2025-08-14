@@ -595,7 +595,9 @@ bool print_cpufetch_sparc(struct cpuInfo* cpu, STYLE s, struct color** cs, struc
     setAttribute(art, ATTRIBUTE_HYPERVISOR, cpu->hv->hv_name);
   }
   setAttribute(art, ATTRIBUTE_UARCH, uarch);
-  setAttribute(art, ATTRIBUTE_TECHNOLOGY, manufacturing_process);
+  if (manufacturing_process != NULL) {
+    setAttribute(art, ATTRIBUTE_TECHNOLOGY, manufacturing_process);
+  }
   setAttribute(art, ATTRIBUTE_FREQUENCY, max_frequency);
   if (cpu->topo != NULL) {
     char* sockets = get_str_sockets(cpu->topo);

@@ -26,7 +26,6 @@ static struct uarch* make_uarch(const char* name, const char* process) {
 
 struct uarch* get_uarch(struct cpuInfo* cpu) {
   UNUSED(cpu);
-  // Minimal stub: unknown uarch/process
   return make_uarch("Unknown", NULL);
 }
 
