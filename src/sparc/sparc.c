@@ -208,7 +208,7 @@ static int64_t measure_peak_performance_f32(struct topology* topo) {
 
   struct timeval t0, t1;
   // Short runtime to avoid long blocking; increase via env if needed
-  double target_seconds = 0.6;
+  double target_seconds = 30;
   if(env != NULL && env[0] == '1') {
     const char* dur = getenv("CPUFETCH_MEASURE_SP_FLOPS_SECS");
     if(dur != NULL) {
