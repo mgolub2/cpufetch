@@ -68,10 +68,10 @@ ifneq ($(OS),Windows_NT)
 		CFLAGS += -DARCH_SPARC -Wno-unused-parameter -std=c99 -fstack-protector-all -mcpu=v9
 
 		# Try enabling VIS builtins if the compiler supports them. Non-fatal if not.
-		is_vis2_flag_supported := yes #$(shell printf 'int main(){return 0;}\n' | $(CC) -mvis2 -x c - -o /dev/null 2>/dev/null && echo yes)
-		is_vis1_flag_supported := yes #$(shell printf 'int main(){return 0;}\n' | $(CC) -mvis -x c - -o /dev/null 2>/dev/null && echo yes)
+		is_vis2_flag_supported := $(shell printf 'int main(){return 0;}\n' | $(CC) -mvis2 -x c - -o /dev/null 2>/dev/null && echo yes)
+		is_vis1_flag_supported := $(shell printf 'int main(){return 0;}\n' | $(CC) -mvis -x c - -o /dev/null 2>/dev/null && echo yes)
 		ifneq ($(is_vis2_flag_supported),)
-			CFLAGS += -mvis2 -DCPUFETCH_GCC_VIS -DCPUFETCH_GCC_VIS2
+			CFLAGS += -mvis2 -mvis -DCPUFETCH_GCC_VIS -DCPUFETCH_GCC_VIS2
 		else ifneq ($(is_vis1_flag_supported),)
 			CFLAGS += -mvis -DCPUFETCH_GCC_VIS
 		endif
