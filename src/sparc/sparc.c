@@ -216,7 +216,6 @@ static int64_t measure_peak_performance_f32(struct topology* topo) {
   // If VIS is available, use packed arithmetic to stress VIS pipelines
   if(sparc_has_vis_level(1)) {
     // Types from GCC VIS built-ins documentation
-    typedef int v1si __attribute__ ((vector_size (4)));
     typedef int v2si __attribute__ ((vector_size (8)));
     typedef short v4hi __attribute__ ((vector_size (8)));
     typedef unsigned char v8qi __attribute__ ((vector_size (8)));

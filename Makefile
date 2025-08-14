@@ -67,13 +67,9 @@ ifneq ($(OS),Windows_NT)
 		HEADERS += $(COMMON_HDR) $(SRC_DIR)sparc.h $(SRC_DIR)uarch.h $(SRC_DIR)udev.h
 		CFLAGS += -DARCH_SPARC -Wno-unused-parameter -std=c99 -fstack-protector-all -mcpu=ultrasparc
 
-		# Try enabling VIS builtins if the compiler supports them. Non-fatal if not.
-		is_vis2_flag_supported := $(shell printf 'int main(){return 0;}\n' | $(CC) -mvis2 -x c - -o /dev/null 2>/dev/null && echo yes)
+		# Try enabling VIS builtins. Prefer VIS1 to avoid v9b assembler mismatches under -mcpu=ultrasparc.
 		is_vis1_flag_supported := $(shell printf 'int main(){return 0;}\n' | $(CC) -mvis -x c - -o /dev/null 2>/dev/null && echo yes)
-		ifneq ($(is_vis2_flag_supported),)
-			# Enable VIS2 macros but keep code path VIS1-only to avoid needing -mcpu=ultrasparc3
-			CFLAGS += -mvis2 -mvis -DCPUFETCH_GCC_VIS -DCPUFETCH_GCC_VIS2
-		else ifneq ($(is_vis1_flag_supported),)
+		ifneq ($(is_vis1_flag_supported),)
 			CFLAGS += -mvis -DCPUFETCH_GCC_VIS
 		endif
 	else
