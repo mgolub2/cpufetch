@@ -9,10 +9,10 @@
 #define _PATH_TOPO_PACKAGE_ID      "topology/physical_package_id"
 #define CPUINFO_FREQUENCY_STR_HEX  "Cpu0ClkTck\t: "
 // Common cpuinfo cache fields (Linux SPARC)
-#define CPUINFO_L1I_STR            "I$\t\t\t: "
-#define CPUINFO_L1D_STR            "D$\t\t\t: "
-#define CPUINFO_L2_STR             "L2$\t\t\t: "
-#define CPUINFO_L3_STR             "L3$\t\t\t: "
+#define CPUINFO_L1I_KEY            "I$"
+#define CPUINFO_L1D_KEY            "D$"
+#define CPUINFO_L2_KEY             "L2$"
+#define CPUINFO_L3_KEY             "L3$"
 
 static bool fill_array_from_sys(int *ids, int total_cores, char* SYS_PATH) {
   int filelen;
@@ -86,41 +86,57 @@ long get_frequency_from_cpuinfo(void) {
   return mhz;
 }
 
-static long parse_cache_kb_from_cpuinfo(char* field) {
-  char* line = get_field_from_cpuinfo(field);
-  if(line == NULL) return -1;
-  // Expect values like: "64K" or "1024K" possibly with text
-  // Trim at first space
-  for(int i=0; line[i]; i++) { if(line[i] == ' ' || line[i] == '\t') { line[i] = '\0'; break; } }
-  char* end;
+static long parse_cache_bytes_from_cpuinfo_any(const char* key) {
+  int filelen;
+  char* buf = read_file(_PATH_CPUINFO, &filelen);
+  if(buf == NULL) return -1;
+
+  // Find line containing the key at the beginning of a field
+  char* p = strstr(buf, key);
+  if(p == NULL) { free(buf); return -1; }
+  // Move to colon after the key
+  char* nl = strchr(p, '\n');
+  char* colon = strchr(p, ':');
+  if(colon == NULL || (nl != NULL && colon > nl)) { free(buf); return -1; }
+  p = colon + 1;
+  // Skip whitespace
+  while(*p == ' ' || *p == '\t') p++;
+  // Parse integer
   errno = 0;
-  long val = strtol(line, &end, 10);
-  free(line);
-  if(errno != 0) return -1;
-  return val * 1024; // convert KB to bytes
+  long val = strtol(p, NULL, 10);
+  if(errno != 0 || val <= 0) { free(buf); return -1; }
+  // Find unit char near after the number
+  // Scan up to end of line for K/M
+  long multiplier = 1024; // default to KB
+  for(; *p && *p != '\n'; p++) {
+    if(*p == 'M' || *p == 'm') { multiplier = 1024L * 1024L; break; }
+    if(*p == 'K' || *p == 'k') { multiplier = 1024L; break; }
+  }
+  free(buf);
+  return val * multiplier;
 }
 
 // SPARC-specific cache size getters. Prefer cpuinfo on SPARC; fall back to sysfs via common helpers.
 long get_l1i_cache_size_sparc(uint32_t core) {
-  long v = parse_cache_kb_from_cpuinfo(CPUINFO_L1I_STR);
+  long v = parse_cache_bytes_from_cpuinfo_any(CPUINFO_L1I_KEY);
   if(v > 0) return v;
   return get_l1i_cache_size(core);
 }
 
 long get_l1d_cache_size_sparc(uint32_t core) {
-  long v = parse_cache_kb_from_cpuinfo(CPUINFO_L1D_STR);
+  long v = parse_cache_bytes_from_cpuinfo_any(CPUINFO_L1D_KEY);
   if(v > 0) return v;
   return get_l1d_cache_size(core);
 }
 
 long get_l2_cache_size_sparc(uint32_t core) {
-  long v = parse_cache_kb_from_cpuinfo(CPUINFO_L2_STR);
+  long v = parse_cache_bytes_from_cpuinfo_any(CPUINFO_L2_KEY);
   if(v > 0) return v;
   return get_l2_cache_size(core);
 }
 
 long get_l3_cache_size_sparc(uint32_t core) {
-  long v = parse_cache_kb_from_cpuinfo(CPUINFO_L3_STR);
+  long v = parse_cache_bytes_from_cpuinfo_any(CPUINFO_L3_KEY);
   if(v > 0) return v;
   return get_l3_cache_size(core);
 }
