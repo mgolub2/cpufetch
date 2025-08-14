@@ -135,19 +135,10 @@ static char* get_cpu_name_from_cpuinfo(void) {
   if (model == NULL) return NULL;
 
   // Normalize some common SPARC strings
-  // 1) UltraSparc -> UltraSPARC
+  // UltraSparc -> UltraSPARC (keep vendor prefix like "TI ")
   char* pos = strstr(model, "UltraSparc");
   if (pos != NULL) {
     memcpy(pos, "UltraSPARC", strlen("UltraSPARC"));
-  }
-  // 2) TI UltraSPARC* -> Sun UltraSPARC*
-  if (strncmp(model, "TI ", 3) == 0) {
-    size_t len = strlen(model);
-    char* fixed = ecalloc(len + 1, sizeof(char));
-    strcpy(fixed, "Sun ");
-    strcpy(fixed + 4, model + 3);
-    free(model);
-    model = fixed;
   }
   return model;
 }
