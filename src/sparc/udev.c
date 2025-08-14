@@ -8,11 +8,7 @@
 #define _PATH_TOPO_CORE_ID         "topology/core_id"
 #define _PATH_TOPO_PACKAGE_ID      "topology/physical_package_id"
 #define CPUINFO_FREQUENCY_STR_HEX  "Cpu0ClkTck\t: "
-// Common cpuinfo cache fields (Linux SPARC)
-#define CPUINFO_L1I_KEY            "I$"
-#define CPUINFO_L1D_KEY            "D$"
-#define CPUINFO_L2_KEY             "L2$"
-#define CPUINFO_L3_KEY             "L3$"
+// No cache sizes in cpuinfo on many SPARC Linux systems. Do not guess.
 
 static bool fill_array_from_sys(int *ids, int total_cores, char* SYS_PATH) {
   int filelen;
@@ -86,58 +82,27 @@ long get_frequency_from_cpuinfo(void) {
   return mhz;
 }
 
-static long parse_cache_bytes_from_cpuinfo_any(const char* key) {
-  int filelen;
-  char* buf = read_file(_PATH_CPUINFO, &filelen);
-  if(buf == NULL) return -1;
-
-  // Find line containing the key at the beginning of a field
-  char* p = strstr(buf, key);
-  if(p == NULL) { free(buf); return -1; }
-  // Move to colon after the key
-  char* nl = strchr(p, '\n');
-  char* colon = strchr(p, ':');
-  if(colon == NULL || (nl != NULL && colon > nl)) { free(buf); return -1; }
-  p = colon + 1;
-  // Skip whitespace
-  while(*p == ' ' || *p == '\t') p++;
-  // Parse integer
-  errno = 0;
-  long val = strtol(p, NULL, 10);
-  if(errno != 0 || val <= 0) { free(buf); return -1; }
-  // Find unit char near after the number
-  // Scan up to end of line for K/M
-  long multiplier = 1024; // default to KB
-  for(; *p && *p != '\n'; p++) {
-    if(*p == 'M' || *p == 'm') { multiplier = 1024L * 1024L; break; }
-    if(*p == 'K' || *p == 'k') { multiplier = 1024L; break; }
-  }
-  free(buf);
-  return val * multiplier;
-}
+// No reliable cpuinfo cache fields: rely on sysfs only on SPARC.
 
 // SPARC-specific cache size getters. Prefer cpuinfo on SPARC; fall back to sysfs via common helpers.
 long get_l1i_cache_size_sparc(uint32_t core) {
-  long v = parse_cache_bytes_from_cpuinfo_any(CPUINFO_L1I_KEY);
-  if(v > 0) return v;
   return get_l1i_cache_size(core);
 }
 
 long get_l1d_cache_size_sparc(uint32_t core) {
-  long v = parse_cache_bytes_from_cpuinfo_any(CPUINFO_L1D_KEY);
-  if(v > 0) return v;
   return get_l1d_cache_size(core);
 }
 
 long get_l2_cache_size_sparc(uint32_t core) {
-  long v = parse_cache_bytes_from_cpuinfo_any(CPUINFO_L2_KEY);
-  if(v > 0) return v;
   return get_l2_cache_size(core);
 }
 
 long get_l3_cache_size_sparc(uint32_t core) {
-  long v = parse_cache_bytes_from_cpuinfo_any(CPUINFO_L3_KEY);
-  if(v > 0) return v;
   return get_l3_cache_size(core);
+}
+
+int get_num_caches_by_level_sparc(struct cpuInfo* cpu, uint32_t level) {
+  // Prefer sysfs shared_cpu_map like other arches
+  return get_num_caches_by_level(cpu, level);
 }
 
