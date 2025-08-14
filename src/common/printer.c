@@ -74,6 +74,8 @@ enum {
   ATTRIBUTE_FEATURES,
 #elif ARCH_RISCV
   ATTRIBUTE_EXTENSIONS,
+#elif ARCH_SPARC
+  ATTRIBUTE_FEATURES,
 #endif
   ATTRIBUTE_L1i,
   ATTRIBUTE_L1d,
@@ -112,6 +114,8 @@ static const char* ATTRIBUTE_FIELDS [] = {
   "Features: ",
 #elif defined(ARCH_RISCV)
   "Extensions: ",
+#elif defined(ARCH_SPARC)
+  "Features: ",
 #endif
   "L1i Size:",
   "L1d Size:",
@@ -150,6 +154,8 @@ static const char* ATTRIBUTE_FIELDS_SHORT [] = {
   "Features: ",
 #elif defined(ARCH_RISCV)
   "Extensions: ",
+#elif defined(ARCH_SPARC)
+  "Features: ",
 #endif
   "L1i Size:",
   "L1d Size:",
