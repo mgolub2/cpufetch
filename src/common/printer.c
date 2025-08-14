@@ -424,7 +424,7 @@ void choose_ascii_art(struct ascii* art, struct color** cs, struct terminal* ter
   else
     art->art = &logo_riscv;
 #elif ARCH_SPARC
-  art->art = choose_ascii_art_aux(&logo_ibm_l, &logo_ibm, term, lf);
+  art->art = &logo_sun;
 #endif
 
   // 2. Choose colors

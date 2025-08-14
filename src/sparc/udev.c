@@ -7,7 +7,7 @@
 
 #define _PATH_TOPO_CORE_ID         "topology/core_id"
 #define _PATH_TOPO_PACKAGE_ID      "topology/physical_package_id"
-#define CPUINFO_FREQUENCY_STR      "cpu MHz\t\t: "
+#define CPUINFO_FREQUENCY_STR_HEX  "Cpu0ClkTck\t: "
 
 static bool fill_array_from_sys(int *ids, int total_cores, char* SYS_PATH) {
   int filelen;
@@ -59,30 +59,25 @@ bool fill_package_ids_from_sys(int* package_ids, int total_cores) {
 }
 
 long get_frequency_from_cpuinfo(void) {
-  char* freq_str = get_field_from_cpuinfo(CPUINFO_FREQUENCY_STR);
-  if(freq_str == NULL) {
+  // Parse Cpu0ClkTck hex value and convert to MHz
+  char* clk_str = get_field_from_cpuinfo(CPUINFO_FREQUENCY_STR_HEX);
+  if(clk_str == NULL) {
     return UNKNOWN_DATA;
   }
-  else {
-    // freq_str should be in the form XXXX.YYYYYY
-    char* dot = strstr(freq_str, ".");
-    if (dot != NULL) freq_str[dot-freq_str] = '\0';
 
-    char* end;
-    errno = 0;
-    long ret = strtol(freq_str, &end, 10);
-    if(errno != 0) {
-      printBug("strtol: %s", strerror(errno));
-      free(freq_str);
-      return UNKNOWN_DATA;
-    }
-
-    if(ret > 10000 || ret <  100) {
-      printBug("Invalid data was read from file '%s': %ld\n", CPUINFO_FREQUENCY_STR, ret);
-      return UNKNOWN_DATA;
-    }
-
-    return ret;
+  // Expect a 16-hex-digit value
+  char* end;
+  errno = 0;
+  unsigned long long hz = strtoull(clk_str, &end, 16);
+  free(clk_str);
+  if(errno != 0) {
+    printWarn("strtoull: %s", strerror(errno));
+    return UNKNOWN_DATA;
   }
+  if (hz == 0ULL) return UNKNOWN_DATA;
+
+  long mhz = (long)(hz / 1000000ULL);
+  if(mhz > 10000 || mhz < 100) return UNKNOWN_DATA;
+  return mhz;
 }
 

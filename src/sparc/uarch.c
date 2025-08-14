@@ -2,7 +2,6 @@
 #include <string.h>
 
 #include "../common/global.h"
-#include "../common/udev.h"
 #include "uarch.h"
 
 struct uarch {
@@ -27,18 +26,7 @@ static struct uarch* make_uarch(const char* name, const char* process) {
 
 struct uarch* get_uarch(struct cpuInfo* cpu) {
   UNUSED(cpu);
-  // Prefer MMU Type (e.g., Cheetah+) as microarchitecture, else use PMU (e.g., ultra3i)
-  char* mmu = get_field_from_cpuinfo("MMU Type\t\t: ");
-  char* pmu = get_field_from_cpuinfo("pmu\t\t: ");
-  const char* name = NULL;
-  if (mmu != NULL) name = mmu;
-  else if (pmu != NULL) name = pmu;
-  else name = "Unknown";
-  struct uarch* ua = make_uarch(name, NULL);
-  // free temporary buffers except the one used in uarch (we reused pointer)
-  if (mmu != NULL && name != mmu) free(mmu);
-  if (pmu != NULL && name != pmu) free(pmu);
-  return ua;
+  return make_uarch("Unknown", NULL);
 }
 
 char* get_str_uarch(struct cpuInfo* cpu) {
