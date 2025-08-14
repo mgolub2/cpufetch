@@ -28,6 +28,7 @@ struct args_struct {
   bool help_flag;
   bool raw_flag;
   bool accurate_pp;
+  bool accurate_pp_with_ops;
   bool measure_max_frequency_flag;
   bool full_cpu_name_flag;
   bool logo_long;
@@ -51,6 +52,7 @@ const char args_chr[] = {
   /* [ARG_LOGO_INTEL_NEW]   = */ 3,
   /* [ARG_LOGO_INTEL_OLD]   = */ 4,
   /* [ARG_ACCURATE_PP]      = */ 5,
+  /* [ARG_ACCURATE_PP_WITH_OPS] = */ 7,
   /* [ARG_MEASURE_MAX_FREQ] = */ 6,
   /* [ARG_DEBUG]            = */ 'd',
   /* [ARG_VERBOSE]          = */ 'v',
@@ -68,6 +70,7 @@ const char *args_str[] = {
   /* [ARG_LOGO_INTEL_NEW]   = */ "logo-intel-new",
   /* [ARG_LOGO_INTEL_OLD]   = */ "logo-intel-old",
   /* [ARG_ACCURATE_PP]      = */ "accurate-pp",
+  /* [ARG_ACCURATE_PP_WITH_OPS] = */ "accurate-pp-with-ops",
   /* [ARG_MEASURE_MAX_FREQ] = */ "measure-max-freq",
   /* [ARG_DEBUG]            = */ "debug",
   /* [ARG_VERBOSE]          = */ "verbose",
@@ -102,6 +105,10 @@ bool show_raw(void) {
 
 bool accurate_pp(void) {
   return args.accurate_pp;
+}
+
+bool accurate_pp_with_ops(void) {
+  return args.accurate_pp_with_ops;
 }
 
 bool measure_max_frequency_flag(void) {
@@ -262,6 +269,7 @@ bool parse_args(int argc, char* argv[]) {
   bool color_flag = false;
   args.debug_flag = false;
   args.accurate_pp = false;
+  args.accurate_pp_with_ops = false;
   args.full_cpu_name_flag = false;
   args.raw_flag = false;
   args.verbose_flag = false;
@@ -291,6 +299,7 @@ bool parse_args(int argc, char* argv[]) {
     {args_str[ARG_MEASURE_MAX_FREQ], no_argument,       0, args_chr[ARG_MEASURE_MAX_FREQ] },
 #elif ARCH_SPARC
     {args_str[ARG_ACCURATE_PP],      no_argument,       0, args_chr[ARG_ACCURATE_PP]      },
+    {args_str[ARG_ACCURATE_PP_WITH_OPS], no_argument,   0, args_chr[ARG_ACCURATE_PP_WITH_OPS] },
 #endif
     {args_str[ARG_LOGO_SHORT],       no_argument,       0, args_chr[ARG_LOGO_SHORT]       },
     {args_str[ARG_LOGO_LONG],        no_argument,       0, args_chr[ARG_LOGO_LONG]        },
@@ -331,6 +340,10 @@ bool parse_args(int argc, char* argv[]) {
     }
     else if(opt == args_chr[ARG_ACCURATE_PP]) {
        args.accurate_pp = true;
+    }
+    else if(opt == args_chr[ARG_ACCURATE_PP_WITH_OPS]) {
+       args.accurate_pp_with_ops = true;
+       args.accurate_pp = true; // implies accurate measurements
     }
     else if(opt == args_chr[ARG_MEASURE_MAX_FREQ]) {
        args.measure_max_frequency_flag = true;

@@ -199,9 +199,8 @@ static bool sparc_has_vis_level(int level) {
   return has;
 }
 
-// Prefer measuring VIS/VIS2 packed arithmetic throughput when enabled.
-// Falls back to scalar FP32 loop if VIS is unavailable.
-// Enabled only if accurate-pp was requested or CPUFETCH_MEASURE_SP_FLOPS=1.
+// Measure accurate FP32 FLOP/s. Enabled only if accurate-pp was requested
+// or CPUFETCH_MEASURE_SP_FLOPS=1.
 static int64_t measure_peak_performance_f32(struct topology* topo) {
   const char* env = getenv("CPUFETCH_MEASURE_SP_FLOPS");
   bool enabled = accurate_pp() || (env != NULL && env[0] == '1');
@@ -310,6 +309,56 @@ static int64_t measure_peak_performance_f32(struct topology* topo) {
   return -1;
 }
 
+#if defined(__sparc__)
+static int64_t measure_vis_ops_throughput(struct topology* topo) {
+  const char* env = getenv("CPUFETCH_MEASURE_SP_FLOPS");
+  bool enabled = accurate_pp_with_ops() || (env != NULL && env[0] == '1');
+  if(!enabled) return -1;
+
+#if !defined(CPUFETCH_GCC_VIS)
+  return -1;
+#else
+  if(!sparc_has_vis_level(1)) return -1;
+
+  struct timeval t0, t1;
+  double target_seconds = 0.4;
+  uint64_t iters = 0;
+
+  typedef unsigned char v8qi __attribute__ ((vector_size (8)));
+  typedef short v4hi __attribute__ ((vector_size (8)));
+
+  volatile v8qi a = (v8qi){1,2,3,4,5,6,7,8};
+  volatile v8qi b = (v8qi){8,7,6,5,4,3,2,1};
+  volatile v8qi c = (v8qi){0,0,0,0,0,0,0,0};
+  volatile v4hi s = (v4hi){1,1,1,1};
+
+  if(gettimeofday(&t0, NULL) != 0) return -1;
+  int ops_per_iter = 0;
+  for(;;) {
+    // 8-bit merges and packs approximate byte-lane throughput
+    v8qi m1 = __builtin_vis_fpmerge(a, b);   // 8 byte ops
+    v8qi p1 = __builtin_vis_fpack16(s);      // 4 half->byte ops
+    c = __builtin_vis_fpack32(s, m1);        // 8 ops
+    a = m1; b = c;
+    ops_per_iter = 8 + 4 + 8; // 20 OPS per iter (byte-oriented)
+
+    iters++;
+    if((iters & 0x3FF) == 0) {
+      if(gettimeofday(&t1, NULL) != 0) break;
+      double elapsed = (double)(t1.tv_sec - t0.tv_sec) + (double)(t1.tv_usec - t0.tv_usec) / 1e6;
+      if(elapsed >= target_seconds) {
+        double ops_per_core = ((double)iters * ops_per_iter) / elapsed;
+        double total_ops = ops_per_core * (double)(topo->physical_cores * topo->sockets);
+        if(total_ops <= 0.0) return -1;
+        return (int64_t) total_ops;
+      }
+    }
+  }
+#endif
+  return -1;
+}
+#endif
+
 int64_t get_peak_performance(struct cpuInfo* cpu, struct topology* topo, int64_t freq) {
   // Prefer VIS/VIS2 packed throughput if measurement is enabled
   int64_t measured = measure_peak_performance_f32(topo);
@@ -379,6 +428,9 @@ struct cpuInfo* get_cpu_info(void) {
   cpu->topo = get_topology_info(cpu->cach);
   cpu->freq = get_frequency_info();
   cpu->peak_performance = get_peak_performance(cpu, cpu->topo, get_freq(cpu->freq));
+#if defined(__sparc__)
+  cpu->vis_ops_performance = accurate_pp_with_ops() ? measure_vis_ops_throughput(cpu->topo) : -1;
+#endif
 
   return cpu;
 }

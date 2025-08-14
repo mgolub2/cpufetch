@@ -595,6 +595,18 @@ bool print_cpufetch_sparc(struct cpuInfo* cpu, STYLE s, struct color** cs, struc
   char* manufacturing_process = get_str_process(cpu);
   char* max_frequency = get_str_freq(cpu->freq);
   char* pp = get_str_peak_performance(cpu->peak_performance);
+#if defined(ARCH_SPARC)
+  char vis_buf[64] = {0};
+  if (accurate_pp_with_ops() && cpu->vis_ops_performance > 0) {
+    double mops = (double)cpu->vis_ops_performance / 1e6;
+    // Append " + XXXX.X MOPS" to the PP string
+    size_t base_len = strlen(pp);
+    char* pp_ext = emalloc(base_len + 32);
+    snprintf(pp_ext, base_len + 32, "%s + %.2f MOPS", pp, mops);
+    free(pp);
+    pp = pp_ext;
+  }
+#endif
   char* features = get_str_features(cpu);
 
   if(cpu_name != NULL) {

@@ -149,6 +149,7 @@ struct cpuInfo {
   struct cache* cach;
   struct topology* topo;
   int64_t peak_performance;
+  int64_t vis_ops_performance; // SPARC: VIS byte ops throughput when requested
 
   // Similar but not exactly equal
   // to struct features

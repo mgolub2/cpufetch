@@ -25,6 +25,7 @@ void print_help(char *argv[]) {
   printf("  -%c, --%s %*s Print main ID register values (debug purposes)\n", c[ARG_DEBUG], t[ARG_DEBUG], (int) (max_len-strlen(t[ARG_DEBUG])), "");
 #elif ARCH_SPARC
   printf("  -%c, --%s %*s Print CPU info (debug purposes)\n", c[ARG_DEBUG], t[ARG_DEBUG], (int) (max_len-strlen(t[ARG_DEBUG])), "");
+  printf("      --%s %*s Compute accurate FP32 FLOP/s; with --%s also report VIS int OPS\n", t[ARG_ACCURATE_PP], (int) (max_len-strlen(t[ARG_ACCURATE_PP])), "", t[ARG_ACCURATE_PP_WITH_OPS]);
 #endif
   printf("      --%s %*s Show the short version of the logo\n", t[ARG_LOGO_SHORT], (int) (max_len-strlen(t[ARG_LOGO_SHORT])), "");
   printf("      --%s %*s Show the long version of the logo\n", t[ARG_LOGO_LONG], (int) (max_len-strlen(t[ARG_LOGO_LONG])), "");
