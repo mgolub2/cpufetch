@@ -4,6 +4,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
+#include <sys/time.h>
+#include "../common/args.h"
+#ifdef CPUFETCH_ALTIVEC
+#include <altivec.h>
+#undef vector
+#undef bool
+#endif
 
 #include "ppc.h"
 #include "uarch.h"
