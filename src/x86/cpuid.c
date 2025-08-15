@@ -18,6 +18,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <sys/time.h>
 
 #include "cpuid.h"
 #include "cpuid_asm.h"
@@ -26,6 +27,65 @@
 #include "apic.h"
 #include "uarch.h"
 #include "freq/freq.h"
+#include <immintrin.h>
+
+// Measure integer byte-lane OPS using AVX2/AVX-512 when requested
+static int64_t measure_avx_ops_avx2(struct topology* topo) __attribute__((target("avx2")));
+static int64_t measure_avx_ops_avx512(struct topology* topo) __attribute__((target("avx512bw,avx512f")));
+
+static int64_t measure_avx_ops_avx2(struct topology* topo) {
+  if(!accurate_pp_with_ops()) return -1;
+  struct timeval t0, t1; double target_seconds = 0.6; uint64_t iters = 0; int ops_per_iter = 0;
+  __m256i a = _mm256_set1_epi8(1);
+  __m256i b = _mm256_set1_epi8(2);
+  __m256i c = _mm256_set1_epi8(3);
+  if(gettimeofday(&t0, NULL) != 0) return -1;
+  for(;;) {
+    __m256i x = _mm256_adds_epu8(a, b);   // 32 ops
+    __m256i y = _mm256_subs_epu8(b, c);   // 32 ops
+    __m256i z = _mm256_avg_epu8(x, y);    // 32 ops
+    a = y; b = z; c = x;
+    ops_per_iter = 96; // 3 x 32 byte ops
+    iters++;
+    if((iters & 0x3FF) == 0) {
+      if(gettimeofday(&t1, NULL) != 0) break;
+      double e = (double)(t1.tv_sec - t0.tv_sec) + (double)(t1.tv_usec - t0.tv_usec) / 1e6;
+      if(e >= target_seconds) {
+        double per_core = ((double)iters * ops_per_iter) / e;
+        double total = per_core * (double)(topo->physical_cores * topo->sockets);
+        if(total <= 0.0) return -1; return (int64_t)total;
+      }
+    }
+  }
+  return -1;
+}
+
+static int64_t measure_avx_ops_avx512(struct topology* topo) {
+  if(!accurate_pp_with_ops()) return -1;
+  struct timeval t0, t1; double target_seconds = 0.6; uint64_t iters = 0; int ops_per_iter = 0;
+  __m512i a = _mm512_set1_epi8(1);
+  __m512i b = _mm512_set1_epi8(2);
+  __m512i c = _mm512_set1_epi8(3);
+  if(gettimeofday(&t0, NULL) != 0) return -1;
+  for(;;) {
+    __m512i x = _mm512_add_epi8(a, b);    // 64 ops
+    __m512i y = _mm512_sub_epi8(b, c);    // 64 ops
+    __m512i z = _mm512_avg_epu8(x, y);    // 64 ops (via intrinsic)
+    a = y; b = z; c = x;
+    ops_per_iter = 192; // 3 x 64 byte ops
+    iters++;
+    if((iters & 0x3FF) == 0) {
+      if(gettimeofday(&t1, NULL) != 0) break;
+      double e = (double)(t1.tv_sec - t0.tv_sec) + (double)(t1.tv_usec - t0.tv_usec) / 1e6;
+      if(e >= target_seconds) {
+        double per_core = ((double)iters * ops_per_iter) / e;
+        double total = per_core * (double)(topo->physical_cores * topo->sockets);
+        if(total <= 0.0) return -1; return (int64_t)total;
+      }
+    }
+  }
+  return -1;
+}
 
 #define CPU_VENDOR_INTEL_STRING "GenuineIntel"
 #define CPU_VENDOR_AMD_STRING   "AuthenticAMD"
@@ -601,6 +661,18 @@ struct cpuInfo* get_cpu_info(void) {
 #endif
 
   cpu->peak_performance = get_peak_performance(cpu, accurate_pp());
+  // Optionally measure integer OPS throughput and attach for printing
+  if (accurate_pp_with_ops()) {
+    int64_t ops = -1;
+    // Prefer AVX-512 if available, else AVX2
+    if (cpu->feat->AVX512 && vpus_are_AVX512(cpu)) {
+      ops = measure_avx_ops_avx512(cpu->topo);
+    }
+    if (ops < 0 && (cpu->feat->AVX2 || cpu->feat->AVX)) {
+      ops = measure_avx_ops_avx2(cpu->topo);
+    }
+    cpu->vis_ops_performance = ops;
+  }
 
   return cpu;
 }
