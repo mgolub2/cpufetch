@@ -244,6 +244,7 @@ struct uarch* get_uarch_from_pvr(uint32_t pvr) {
 
 bool has_altivec(struct uarch* arch) {
   switch(arch->uarch) {
+    case UARCH_PPCG4:
     case UARCH_PPC970FX:
     case UARCH_PPC970MP:
     case UARCH_CELLBE:
