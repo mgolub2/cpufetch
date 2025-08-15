@@ -121,6 +121,15 @@ make
 <p align="center"><img width=90% src="pictures/ibm.png"></p>
 <p align="center">Talos II</p>
 
+Accurate peak performance on PowerPC:
+
+- `--accurate-pp`: measures FP32 FLOP/s using a scalar math loop (no AltiVec required). This reports FLOP/s based on floating-point operations only.
+- `--accurate-pp-with-ops`: in addition to FP32 FLOP/s, measures AltiVec byte-lane operations per second and appends them as MOPS (e.g., `+ 1234.56 MOPS`). This requires compiler and CPU AltiVec support (build enables `-maltivec` automatically when available).
+
+Notes:
+- AltiVec provides native 8-bit and 16-bit integer lane operations (and 32-bit), but does not have native 4-bit lanes. Therefore, we report byte-lane (8-bit) MOPS on PPC.
+- See GCC’s AltiVec header notes for keyword behavior and intrinsics details ([altivec.h](https://gist.github.com/Cyan4973/ccaa71def08f819c5ee67228fcf50355)).
+
 ## 3.4 RISC-V
 
 <p align="center"><img width=80% src="pictures/starfive.png"></p>
