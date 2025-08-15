@@ -50,7 +50,7 @@ static int64_t measure_avx_ops_avx2(struct topology* topo) {
     if((iters & 0x3FF) == 0) {
       if(gettimeofday(&t1, NULL) != 0) break;
       double e = (double)(t1.tv_sec - t0.tv_sec) + (double)(t1.tv_usec - t0.tv_usec) / 1e6;
-      if(e >= target_seconds) {
+      if(e >= target_seconds && topo != NULL) {
         double per_core = ((double)iters * ops_per_iter) / e;
         double total = per_core * (double)(topo->physical_cores * topo->sockets);
         if(total <= 0.0) return -1; return (int64_t)total;
@@ -77,7 +77,7 @@ static int64_t measure_avx_ops_avx512(struct topology* topo) {
     if((iters & 0x3FF) == 0) {
       if(gettimeofday(&t1, NULL) != 0) break;
       double e = (double)(t1.tv_sec - t0.tv_sec) + (double)(t1.tv_usec - t0.tv_usec) / 1e6;
-      if(e >= target_seconds) {
+      if(e >= target_seconds && topo != NULL) {
         double per_core = ((double)iters * ops_per_iter) / e;
         double total = per_core * (double)(topo->physical_cores * topo->sockets);
         if(total <= 0.0) return -1; return (int64_t)total;
