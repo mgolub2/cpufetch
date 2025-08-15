@@ -309,6 +309,7 @@ bool parse_args(int argc, char* argv[]) {
     {args_str[ARG_ACCURATE_PP_WITH_OPS], no_argument,   0, args_chr[ARG_ACCURATE_PP_WITH_OPS] },
 #elif ARCH_PPC
     {args_str[ARG_ACCURATE_PP],      no_argument,       0, args_chr[ARG_ACCURATE_PP]      },
+    {args_str[ARG_ACCURATE_PP_WITH_OPS], no_argument,   0, args_chr[ARG_ACCURATE_PP_WITH_OPS] },
 #endif
     {args_str[ARG_LOGO_SHORT],       no_argument,       0, args_chr[ARG_LOGO_SHORT]       },
     {args_str[ARG_LOGO_LONG],        no_argument,       0, args_chr[ARG_LOGO_LONG]        },
