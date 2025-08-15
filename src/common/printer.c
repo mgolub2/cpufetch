@@ -824,6 +824,14 @@ bool print_cpufetch_ppc(struct cpuInfo* cpu, STYLE s, struct color** cs, struct 
   char* l2 = get_str_l2(cpu->cach);
   char* l3 = get_str_l3(cpu->cach);
   char* pp = get_str_peak_performance(cpu->peak_performance);
+  if (accurate_pp_with_ops() && cpu->vis_ops_performance > 0) {
+    double mops = (double)cpu->vis_ops_performance / 1e6;
+    size_t base_len = strlen(pp);
+    char* pp_ext = emalloc(base_len + 32);
+    snprintf(pp_ext, base_len + 32, "%s + %.2f MOPS", pp, mops);
+    free(pp);
+    pp = pp_ext;
+  }
 
   // Step 2. Set attributes
   if(cpu_name != NULL) {
