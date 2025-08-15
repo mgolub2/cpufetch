@@ -1,6 +1,7 @@
 #ifndef __CPUFETCH_POWERPC__
 #define __CPUFETCH_POWERPC__
 
+#include <stdbool.h>
 #include "../common/cpu.h"
 
 struct cpuInfo* get_cpu_info(void);
