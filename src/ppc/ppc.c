@@ -15,6 +15,7 @@
 #include <altivec.h>
 #undef vector
 #undef bool
+#include <stdbool.h>
 #endif
 
 #include "ppc.h"
