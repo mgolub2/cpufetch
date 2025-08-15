@@ -4,7 +4,6 @@
 #endif
 
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdlib.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,6 +15,9 @@
 #include <altivec.h>
 #undef vector
 #undef bool
+#undef pixel
+#include <stdbool.h>
+#else
 #include <stdbool.h>
 #endif
 
