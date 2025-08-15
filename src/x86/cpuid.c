@@ -50,7 +50,8 @@ static int64_t measure_avx_ops_avx2(struct topology* topo) {
     if((iters & 0x3FF) == 0) {
       if(gettimeofday(&t1, NULL) != 0) break;
       double e = (double)(t1.tv_sec - t0.tv_sec) + (double)(t1.tv_usec - t0.tv_usec) / 1e6;
-      if(e >= target_seconds && topo != NULL) {
+      if(e >= target_seconds) {
+        if(topo == NULL) return -1;
         double per_core = ((double)iters * ops_per_iter) / e;
         double total = per_core * (double)(topo->physical_cores * topo->sockets);
         if(total <= 0.0) return -1;
@@ -78,7 +79,8 @@ static int64_t measure_avx_ops_avx512(struct topology* topo) {
     if((iters & 0x3FF) == 0) {
       if(gettimeofday(&t1, NULL) != 0) break;
       double e = (double)(t1.tv_sec - t0.tv_sec) + (double)(t1.tv_usec - t0.tv_usec) / 1e6;
-      if(e >= target_seconds && topo != NULL) {
+      if(e >= target_seconds) {
+        if(topo == NULL) return -1;
         double per_core = ((double)iters * ops_per_iter) / e;
         double total = per_core * (double)(topo->physical_cores * topo->sockets);
         if(total <= 0.0) return -1;
@@ -664,7 +666,7 @@ struct cpuInfo* get_cpu_info(void) {
 
   cpu->peak_performance = get_peak_performance(cpu, accurate_pp());
   // Optionally measure integer OPS throughput and attach for printing
-  if (accurate_pp_with_ops()) {
+  if (accurate_pp_with_ops() && cpu->topo != NULL) {
     int64_t ops = -1;
     // Prefer AVX-512 if available, else AVX2
     if (cpu->feat->AVX512 && vpus_are_AVX512(cpu)) {
