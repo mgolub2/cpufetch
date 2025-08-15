@@ -1,7 +1,6 @@
 #ifndef __UARCH__
 #define __UARCH__
 
-#include "ppc.h" // ensures bool is defined via fallback in ppc.h
 #include <stdint.h>
 #include "ppc.h"
 
