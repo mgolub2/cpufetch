@@ -53,7 +53,8 @@ static int64_t measure_avx_ops_avx2(struct topology* topo) {
       if(e >= target_seconds && topo != NULL) {
         double per_core = ((double)iters * ops_per_iter) / e;
         double total = per_core * (double)(topo->physical_cores * topo->sockets);
-        if(total <= 0.0) return -1; return (int64_t)total;
+        if(total <= 0.0) return -1;
+        return (int64_t)total;
       }
     }
   }
@@ -80,7 +81,8 @@ static int64_t measure_avx_ops_avx512(struct topology* topo) {
       if(e >= target_seconds && topo != NULL) {
         double per_core = ((double)iters * ops_per_iter) / e;
         double total = per_core * (double)(topo->physical_cores * topo->sockets);
-        if(total <= 0.0) return -1; return (int64_t)total;
+        if(total <= 0.0) return -1;
+        return (int64_t)total;
       }
     }
   }
