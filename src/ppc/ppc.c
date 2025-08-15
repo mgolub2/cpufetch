@@ -16,7 +16,7 @@
 #ifdef CPUFETCH_ALTIVEC
 #include <altivec.h>
 #undef vector
-#undef bool
+#undef pixel
 #endif
 
 static char *hv_vendors_name[] = {
