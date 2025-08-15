@@ -1,22 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <assert.h>
 #include <sys/time.h>
-#include "../common/args.h"
-#ifdef CPUFETCH_ALTIVEC
-#include <altivec.h>
-#undef vector
-#undef bool
-#endif
 
 #include "ppc.h"
 #include "uarch.h"
 #include "udev.h"
 #include "../common/udev.h"
 #include "../common/global.h"
+#include "../common/args.h"
+
+#ifdef CPUFETCH_ALTIVEC
+#include <altivec.h>
+#undef vector
+#undef bool
+#endif
 
 static char *hv_vendors_name[] = {
   [HV_VENDOR_KVM]       = "KVM",
