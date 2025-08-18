@@ -619,6 +619,14 @@ bool print_cpufetch_sparc(struct cpuInfo* cpu, STYLE s, struct color** cs, struc
     free(pp);
     pp = pp_ext;
   }
+  if (accurate_pp_with_ops() && cpu->vis_ops_performance > 0) {
+    double mops = (double)cpu->vis_ops_performance / 1e6;
+    size_t base_len = strlen(pp);
+    char* pp_ext = emalloc(base_len + 32);
+    snprintf(pp_ext, base_len + 32, "%s + %.2f MOPS", pp, mops);
+    free(pp);
+    pp = pp_ext;
+  }
 
   char* features = get_str_features(cpu);
 
