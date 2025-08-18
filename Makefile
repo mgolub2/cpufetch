@@ -67,6 +67,11 @@ ifneq ($(OS),Windows_NT)
 		SOURCE += $(COMMON_SRC) $(SRC_DIR)riscv.c $(SRC_DIR)uarch.c $(SRC_COMMON)soc.c $(SRC_DIR)soc.c $(SRC_DIR)udev.c
 		HEADERS += $(COMMON_HDR) $(SRC_DIR)riscv.h $(SRC_DIR)uarch.h $(SRC_COMMON)soc.h $(SRC_DIR)soc.h $(SRC_DIR)udev.h $(SRC_DIR)socs.h
 		CFLAGS += -DARCH_RISCV -Wno-unused-parameter -std=c99 -fstack-protector-all
+	else ifeq ($(arch), $(filter $(arch), parisc parisc64 hppa))
+		SRC_DIR=src/parisc/
+		SOURCE += $(COMMON_SRC) $(SRC_DIR)parisc.c $(SRC_DIR)uarch.c $(SRC_DIR)udev.c
+		HEADERS += $(COMMON_HDR) $(SRC_DIR)parisc.h $(SRC_DIR)uarch.h $(SRC_DIR)udev.h
+		CFLAGS += -DARCH_PARISC -Wno-unused-parameter -std=c99 -fstack-protector-all
 	else ifeq ($(arch), $(filter $(arch), sparc64 sparc))
 		SRC_DIR=src/sparc/
 		SOURCE += $(COMMON_SRC) $(SRC_DIR)sparc.c $(SRC_DIR)uarch.c $(SRC_DIR)udev.c

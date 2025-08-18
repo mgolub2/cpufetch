@@ -15,6 +15,8 @@ typedef int STYLE;
   #include "../riscv/riscv.h"
 #elif ARCH_SPARC
   #include "../sparc/sparc.h"
+#elif ARCH_PARISC
+  #include "../parisc/parisc.h"
 #endif
 
 //                              +-----------------------------------+-----------------------+

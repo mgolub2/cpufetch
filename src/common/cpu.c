@@ -18,6 +18,8 @@
   #include "../riscv/uarch.h"
 #elif ARCH_SPARC
   #include "../sparc/uarch.h"
+#elif ARCH_PARISC
+  #include "../parisc/uarch.h"
 #endif
 
 #define STRING_YES        "Yes"
@@ -42,7 +44,7 @@ int64_t get_freq_pp(struct frequency* freq) {
 }
 #endif
 
-#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC)
+#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC) || defined(ARCH_PARISC)
 char* get_str_cpu_name(struct cpuInfo* cpu, bool fcpuname) {
   #ifdef ARCH_X86
   if(!fcpuname) {

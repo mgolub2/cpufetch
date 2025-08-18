@@ -46,6 +46,9 @@
 #elif ARCH_SPARC
   static const char* ARCH_STR = "SPARC build";
   #include "../sparc/sparc.h"
+#elif ARCH_PARISC
+  static const char* ARCH_STR = "PA-RISC build";
+  #include "../parisc/parisc.h"
 #endif
 
 #ifdef __linux__
