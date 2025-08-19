@@ -44,7 +44,10 @@ void print_help(char *argv[]) {
 #endif // ARCH_X86
 #ifdef ARCH_ARM
 #ifdef __linux__
+  printf("      --%s %*s In addition to FP32 FLOP/s, measure NEON integer OPS and append them (ARM)\n", t[ARG_ACCURATE_PP_WITH_OPS], (int) (max_len-strlen(t[ARG_ACCURATE_PP_WITH_OPS])), "");
   printf("      --%s %*s Measure the max CPU frequency instead of reading it\n", t[ARG_MEASURE_MAX_FREQ], (int) (max_len-strlen(t[ARG_MEASURE_MAX_FREQ])), "");
+#else
+  printf("      --%s %*s In addition to FP32 FLOP/s, measure NEON integer OPS and append them (ARM)\n", t[ARG_ACCURATE_PP_WITH_OPS], (int) (max_len-strlen(t[ARG_ACCURATE_PP_WITH_OPS])), "");
 #endif
 #endif
   printf("  -%c, --%s %*s Print this help and exit\n", c[ARG_HELP], t[ARG_HELP], (int) (max_len-strlen(t[ARG_HELP])), "");

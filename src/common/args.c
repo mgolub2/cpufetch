@@ -244,10 +244,10 @@ char* build_short_options(void) {
   c[ARG_DEBUG], c[ARG_VERBOSE],
   c[ARG_VERSION]);
 #elif ARCH_ARM
-  sprintf(str, "%c:%c:%c%c%c%c%c%c%c",
+  sprintf(str, "%c:%c:%c%c%c%c%c%c%c%c",
   c[ARG_STYLE], c[ARG_COLOR], c[ARG_HELP],
   c[ARG_LOGO_SHORT], c[ARG_LOGO_LONG],
-  c[ARG_MEASURE_MAX_FREQ],
+  c[ARG_ACCURATE_PP_WITH_OPS], c[ARG_MEASURE_MAX_FREQ],
   c[ARG_DEBUG], c[ARG_VERBOSE],
   c[ARG_VERSION]);
 #elif ARCH_PPC
@@ -304,7 +304,8 @@ bool parse_args(int argc, char* argv[]) {
     {args_str[ARG_FULLCPUNAME],      no_argument,       0, args_chr[ARG_FULLCPUNAME]      },
     {args_str[ARG_RAW],              no_argument,       0, args_chr[ARG_RAW]              },
 #elif ARCH_ARM
-    {args_str[ARG_MEASURE_MAX_FREQ], no_argument,       0, args_chr[ARG_MEASURE_MAX_FREQ] },
+    {args_str[ARG_ACCURATE_PP_WITH_OPS], no_argument,   0, args_chr[ARG_ACCURATE_PP_WITH_OPS] },
+    {args_str[ARG_MEASURE_MAX_FREQ],     no_argument,   0, args_chr[ARG_MEASURE_MAX_FREQ]     },
 #elif ARCH_SPARC
     {args_str[ARG_ACCURATE_PP],      no_argument,       0, args_chr[ARG_ACCURATE_PP]      },
     {args_str[ARG_ACCURATE_PP_WITH_OPS], no_argument,   0, args_chr[ARG_ACCURATE_PP_WITH_OPS] },
