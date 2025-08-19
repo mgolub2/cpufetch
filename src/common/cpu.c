@@ -179,54 +179,63 @@ char* get_str_freq(struct frequency* freq) {
   return string;
 }
 
-char* get_str_peak_performance(int64_t flops) {
-  char* str;
+// SI unit constants for FLOPS
+#define FLOPS_MEGA  1000000LL
+#define FLOPS_GIGA  (FLOPS_MEGA * 1000LL)
+#define FLOPS_TERA  (FLOPS_GIGA * 1000LL)
 
+char* get_str_peak_performance(int64_t flops) {
   if(flops == -1) {
-    str = emalloc(sizeof(char) * (strlen(STRING_UNKNOWN) + 1));
-    strncpy(str, STRING_UNKNOWN, strlen(STRING_UNKNOWN) + 1);
+    size_t len = strlen(STRING_UNKNOWN) + 1;
+    char* str = emalloc(sizeof(char) * len);
+    strcpy(str, STRING_UNKNOWN);
     return str;
   }
 
-  // 7 for digits (e.g, XXXX.XX), 7 for XFLOP/s
-  double flopsd = (double) flops;
-  uint32_t max_size = 7+1+7+1;
-  str = ecalloc(max_size, sizeof(char));
+  // Buffer size for "XXXX.XX XFLOP/s" format (max 16 chars + null terminator)
+  const size_t max_size = 17;
+  char* str = ecalloc(max_size, sizeof(char));
 
-  if(flopsd >= (double)1000000000000.0)
-    snprintf(str, max_size, "%.2f TFLOP/s", flopsd/1000000000000);
-  else if(flopsd >= 1000000000.0)
-    snprintf(str, max_size, "%.2f GFLOP/s", flopsd/1000000000);
+  // Use integer comparisons to avoid unnecessary floating point conversion
+  if(flops >= FLOPS_TERA)
+    snprintf(str, max_size, "%.2f TFLOP/s", (double)flops / FLOPS_TERA);
+  else if(flops >= FLOPS_GIGA)
+    snprintf(str, max_size, "%.2f GFLOP/s", (double)flops / FLOPS_GIGA);
   else
-    snprintf(str, max_size, "%.2f MFLOP/s", flopsd/1000000);
+    snprintf(str, max_size, "%.2f MFLOP/s", (double)flops / FLOPS_MEGA);
 
   return str;
 }
 
-char* get_str_ops(int64_t ops) {
-  char* str;
+// SI unit constants for operations per second
+#define OPS_KILO  1000LL
+#define OPS_MEGA  (OPS_KILO * 1000LL)
+#define OPS_GIGA  (OPS_MEGA * 1000LL)
+#define OPS_TERA  (OPS_GIGA * 1000LL)
 
+char* get_str_ops(int64_t ops) {
   if(ops == -1) {
-    str = emalloc(sizeof(char) * (strlen(STRING_UNKNOWN) + 1));
-    strncpy(str, STRING_UNKNOWN, strlen(STRING_UNKNOWN) + 1);
+    size_t len = strlen(STRING_UNKNOWN) + 1;
+    char* str = emalloc(sizeof(char) * len);
+    strcpy(str, STRING_UNKNOWN);
     return str;
   }
 
-  // 7 for digits (e.g, XXXX.XX), 6 for X(K/M/G/T)OPS
-  double opsd = (double) ops;
-  uint32_t max_size = 7+1+6+1;
-  str = ecalloc(max_size, sizeof(char));
-
-  if(opsd >= (double)1000000000000.0)
-    snprintf(str, max_size, "%.2f TOPS", opsd/1000000000000.0);
-  else if(opsd >= 1000000000.0)
-    snprintf(str, max_size, "%.2f GOPS", opsd/1000000000.0);
-  else if(opsd >= 1000000.0)
-    snprintf(str, max_size, "%.2f MOPS", opsd/1000000.0);
-  else if(opsd >= 1000.0)
-    snprintf(str, max_size, "%.2f KOPS", opsd/1000.0);
+  // Buffer size for "XXXX.XX XOPS" format (max 14 chars + null terminator)
+  const size_t max_size = 15;
+  char* str = ecalloc(max_size, sizeof(char));
+  
+  // Use integer comparisons to avoid unnecessary floating point conversion
+  if(ops >= OPS_TERA)
+    snprintf(str, max_size, "%.2f TOPS", (double)ops / OPS_TERA);
+  else if(ops >= OPS_GIGA)
+    snprintf(str, max_size, "%.2f GOPS", (double)ops / OPS_GIGA);
+  else if(ops >= OPS_MEGA)
+    snprintf(str, max_size, "%.2f MOPS", (double)ops / OPS_MEGA);
+  else if(ops >= OPS_KILO)
+    snprintf(str, max_size, "%.2f KOPS", (double)ops / OPS_KILO);
   else
-    snprintf(str, max_size, "%.0f OPS", opsd);
+    snprintf(str, max_size, "%lld OPS", (long long)ops);
 
   return str;
 }
