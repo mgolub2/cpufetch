@@ -157,6 +157,48 @@ int64_t get_peak_performance(struct cpuInfo* cpu) {
     }
   }
 
+  // If requested, try measuring FP32 FLOP/s directly and use that
+  // value as the peak performance when available. This mirrors the
+  // behavior on other architectures.
+  {
+#if defined(__linux__) || defined(__APPLE__) || defined(__MACH__)
+    // Measure a simple FP32 throughput loop on one core and scale by total cores
+    // across all CPU modules when accurate-pp is enabled.
+    if(accurate_pp()) {
+      struct timeval t0, t1;
+      double target_seconds = 1.0;
+      uint64_t iters = 0;
+      int ops_per_iter = 32; // number of scalar FP32 operations per loop body
+      volatile float a = 1.0f, b = 1.0001f, c = 0.9997f, d = 1.0003f;
+      if(gettimeofday(&t0, NULL) == 0) {
+        for(;;) {
+          a = a + b; b = b * c; c = c + d; d = d * a;
+          a = a + b; b = b * c; c = c + d; d = d * a;
+          a = a + b; b = b * c; c = c + d; d = d * a;
+          a = a + b; b = b * c; c = c + d; d = d * a;
+          iters++;
+          if((iters & 0x3FF) == 0) {
+            if(gettimeofday(&t1, NULL) != 0) break;
+            double elapsed = (double)(t1.tv_sec - t0.tv_sec) + (double)(t1.tv_usec - t0.tv_usec) / 1e6;
+            if(elapsed >= target_seconds) {
+              double per_core = ((double)iters * ops_per_iter) / elapsed;
+              // Sum total cores across modules
+              int32_t total_cores = 0;
+              struct cpuInfo* sum_ptr = cpu;
+              for(int i = 0; i < cpu->num_cpus; sum_ptr = sum_ptr->next_cpu, i++) {
+                total_cores += (sum_ptr->topo != NULL ? sum_ptr->topo->total_cores : 0);
+              }
+              double total = per_core * (double) total_cores;
+              if(total > 0.0) return (int64_t) total;
+              break;
+            }
+          }
+        }
+      }
+    }
+#endif
+  }
+
   int64_t total_flops = 0;
   ptr = cpu;
 

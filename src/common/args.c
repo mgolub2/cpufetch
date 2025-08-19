@@ -304,6 +304,7 @@ bool parse_args(int argc, char* argv[]) {
     {args_str[ARG_FULLCPUNAME],      no_argument,       0, args_chr[ARG_FULLCPUNAME]      },
     {args_str[ARG_RAW],              no_argument,       0, args_chr[ARG_RAW]              },
 #elif ARCH_ARM
+    {args_str[ARG_ACCURATE_PP],          no_argument,   0, args_chr[ARG_ACCURATE_PP]          },
     {args_str[ARG_ACCURATE_PP_WITH_OPS], no_argument,   0, args_chr[ARG_ACCURATE_PP_WITH_OPS] },
     {args_str[ARG_MEASURE_MAX_FREQ],     no_argument,   0, args_chr[ARG_MEASURE_MAX_FREQ]     },
 #elif ARCH_SPARC
