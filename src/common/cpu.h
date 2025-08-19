@@ -221,6 +221,7 @@ char* get_str_l2(struct cache* cach);
 char* get_str_l3(struct cache* cach);
 char* get_str_freq(struct frequency* freq);
 char* get_str_peak_performance(int64_t flops);
+char* get_str_ops(int64_t ops);
 
 void init_topology_struct(struct topology* topo, struct cache* cach);
 void init_cache_struct(struct cache* cach);

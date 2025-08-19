@@ -4,6 +4,13 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <errno.h>
+#if defined(__linux__) || defined(__APPLE__) || defined(__MACH__)
+  #include <sys/time.h>
+#endif
+#if defined(__ARM_NEON) || defined(__aarch64__)
+  #include <arm_neon.h>
+  #define CPUFETCH_NEON 1
+#endif
 
 #ifdef __linux__
   #include <sys/auxv.h>
@@ -315,6 +322,46 @@ struct features* get_features_info(void) {
   return feat;
 }
 
+#if defined(CPUFETCH_NEON)
+static int64_t measure_neon_ops_total(struct cpuInfo* cpu) {
+  if(!accurate_pp_with_ops()) return -1;
+  // Measure on a single core and scale by total cores across modules
+  struct timeval t0, t1;
+  double target_seconds = 0.6;
+  uint64_t iters = 0; int ops_per_iter = 0;
+  volatile uint8x16_t a = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+  volatile uint8x16_t b = {16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1};
+  volatile uint8x16_t c = vdupq_n_u8(0);
+
+  if(gettimeofday(&t0, NULL) != 0) return -1;
+  for(;;) {
+    // 16 byte-lane ops per intrinsic
+    uint8x16_t m = vaddq_u8(a, b);   // 16 ops
+    c = veorq_u8(m, b);              // 16 ops
+    a = c; b = m;
+    ops_per_iter = 32;
+    iters++;
+    if((iters & 0x3FF) == 0) {
+      if(gettimeofday(&t1, NULL) != 0) break;
+      double elapsed = (double)(t1.tv_sec - t0.tv_sec) + (double)(t1.tv_usec - t0.tv_usec)/1e6;
+      if(elapsed >= target_seconds) {
+        double per_core = ((double)iters * ops_per_iter) / elapsed;
+        // Sum total cores across modules
+        int32_t total_cores = 0;
+        struct cpuInfo* ptr = cpu;
+        for(int i=0; i < cpu->num_cpus; ptr = ptr->next_cpu, i++) {
+          total_cores += (ptr->topo != NULL ? ptr->topo->total_cores : 0);
+        }
+        double total = per_core * (double) total_cores;
+        if(total <= 0.0) return -1;
+        return (int64_t) total;
+      }
+    }
+  }
+  return -1;
+}
+#endif
+
 #ifdef __linux__
 struct cpuInfo* get_cpu_info_linux(struct cpuInfo* cpu) {
   init_cpu_info(cpu);
@@ -368,6 +415,11 @@ struct cpuInfo* get_cpu_info_linux(struct cpuInfo* cpu) {
   cpu->hv->present = false;
   cpu->soc = get_soc(cpu);
   cpu->peak_performance = get_peak_performance(cpu);
+#if defined(CPUFETCH_NEON)
+  cpu->vis_ops_performance = measure_neon_ops_total(cpu);
+#else
+  cpu->vis_ops_performance = -1;
+#endif
 
   return cpu;
 }
@@ -524,6 +576,11 @@ struct cpuInfo* get_cpu_info_mach(struct cpuInfo* cpu) {
     return NULL;
   }
 
+#if defined(CPUFETCH_NEON)
+  cpu->vis_ops_performance = measure_neon_ops_total(cpu);
+#else
+  cpu->vis_ops_performance = -1;
+#endif
   return cpu;
 }
 #elif defined _WIN32

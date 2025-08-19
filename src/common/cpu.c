@@ -203,6 +203,34 @@ char* get_str_peak_performance(int64_t flops) {
   return str;
 }
 
+char* get_str_ops(int64_t ops) {
+  char* str;
+
+  if(ops == -1) {
+    str = emalloc(sizeof(char) * (strlen(STRING_UNKNOWN) + 1));
+    strncpy(str, STRING_UNKNOWN, strlen(STRING_UNKNOWN) + 1);
+    return str;
+  }
+
+  // 7 for digits (e.g, XXXX.XX), 6 for X(K/M/G/T)OPS
+  double opsd = (double) ops;
+  uint32_t max_size = 7+1+6+1;
+  str = ecalloc(max_size, sizeof(char));
+
+  if(opsd >= (double)1000000000000.0)
+    snprintf(str, max_size, "%.2f TOPS", opsd/1000000000000.0);
+  else if(opsd >= 1000000000.0)
+    snprintf(str, max_size, "%.2f GOPS", opsd/1000000000.0);
+  else if(opsd >= 1000000.0)
+    snprintf(str, max_size, "%.2f MOPS", opsd/1000000.0);
+  else if(opsd >= 1000.0)
+    snprintf(str, max_size, "%.2f KOPS", opsd/1000.0);
+  else
+    snprintf(str, max_size, "%.0f OPS", opsd);
+
+  return str;
+}
+
 void init_topology_struct(struct topology* topo, struct cache* cach) {
   topo->total_cores = 0;
   topo->cach = cach;
