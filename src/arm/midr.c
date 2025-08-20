@@ -18,6 +18,7 @@
   #include "../common/freq.h"
 #elif defined __APPLE__ || __MACH__
   #include "../common/sysctl.h"
+  #include "./metal_bench.h"
 #elif defined _WIN32
   #define WIN32_LEAN_AND_MEAN
   #define NOMINMAX
@@ -618,11 +619,32 @@ struct cpuInfo* get_cpu_info_mach(struct cpuInfo* cpu) {
     return NULL;
   }
 
-#if defined(CPUFETCH_NEON)
-  cpu->vis_ops_performance = measure_neon_ops_total(cpu);
-#else
-  cpu->vis_ops_performance = -1;
-#endif
+  // CPU vector ops (NEON) if requested
+  #if defined(CPUFETCH_NEON)
+    if (accurate_pp_with_ops() || accurate_pp_all()) {
+      int64_t neon_ops = measure_neon_ops_total(cpu);
+      cpu->vis_ops_performance = neon_ops;
+      if (show_debug()) {
+        fprintf(stderr, "[cpufetch] NEON ops measured: %lld\n", (long long)neon_ops);
+      }
+    } else {
+      cpu->vis_ops_performance = -1;
+    }
+  #else
+    cpu->vis_ops_performance = -1;
+  #endif
+  // GPU ops via Metal if requested (macOS only)
+  #if defined(__APPLE__) || defined(__MACH__)
+    cpu->gpu_ops_performance = -1;
+    if (accurate_pp_all()) {
+      int64_t gpu_ops = measure_metal_gpu_ops_total();
+      if (gpu_ops > 0) cpu->gpu_ops_performance = gpu_ops;
+      if (show_debug()) {
+        if (gpu_ops > 0) fprintf(stderr, "[cpufetch] Metal GPU ops measured: %lld\n", (long long)gpu_ops);
+        else fprintf(stderr, "[cpufetch] Metal GPU measurement returned %lld\n", (long long)gpu_ops);
+      }
+    }
+  #endif
   return cpu;
 }
 #elif defined _WIN32

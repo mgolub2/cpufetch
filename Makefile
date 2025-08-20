@@ -1,6 +1,8 @@
 CC ?= gcc
 
 CFLAGS+=-Wall -Wextra -pedantic
+LDFLAGS+=
+METAL_OBJ=
 SANITY_FLAGS=-Wfloat-equal -Wshadow -Wpointer-arith -Wstrict-prototypes
 
 PREFIX ?= /usr
@@ -61,6 +63,10 @@ ifneq ($(OS),Windows_NT)
 		ifeq ($(os), Darwin)
 			SOURCE += $(SRC_COMMON)sysctl.c
 			HEADERS += $(SRC_COMMON)sysctl.h
+			# Metal GPU benchmark (Objective-C++)
+			METAL_OBJ = metal_bench.o
+			HEADERS += $(SRC_DIR)metal_bench.h
+			LDFLAGS += -framework Metal -framework Foundation -lc++
 		endif
 	else ifeq ($(arch), $(filter $(arch), riscv64 riscv32))
 		SRC_DIR=src/riscv/
@@ -144,11 +150,15 @@ freq_avx512.o: Makefile $(SRC_DIR)freq/freq_avx512.c $(SRC_DIR)freq/freq_avx512.
 sve.o: Makefile $(SRC_DIR)sve.c $(SRC_DIR)sve.h
 	$(CC) $(CFLAGS) $(SANITY_FLAGS) $(SVE_FLAGS) -c $(SRC_DIR)sve.c -o $@
 
-$(OUTPUT): Makefile $(SOURCE) $(HEADERS)
+# Compile Objective-C++ file separately with proper language standard
+metal_bench.o: $(SRC_DIR)metal_bench.mm $(SRC_DIR)metal_bench.h
+	clang++ -x objective-c++ -fobjc-arc -stdlib=libc++ -std=c++17 -c $(SRC_DIR)metal_bench.mm -o $@
+
+$(OUTPUT): Makefile $(SOURCE) $(HEADERS) $(METAL_OBJ)
 ifeq ($(GIT_VERSION),"")
-	$(CC) $(CFLAGS) $(SANITY_FLAGS) $(SOURCE) -o $(OUTPUT)
+	$(CC) $(CFLAGS) $(SANITY_FLAGS) $(SOURCE) $(METAL_OBJ) -o $(OUTPUT) $(LDFLAGS)
 else
-	$(CC) $(CFLAGS) $(SANITY_FLAGS) -DGIT_FULL_VERSION=\"$(GIT_VERSION)\" $(SOURCE) -o $(OUTPUT)
+	$(CC) $(CFLAGS) $(SANITY_FLAGS) -DGIT_FULL_VERSION=\"$(GIT_VERSION)\" $(SOURCE) $(METAL_OBJ) -o $(OUTPUT) $(LDFLAGS)
 endif
 
 run: $(OUTPUT)

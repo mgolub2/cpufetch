@@ -29,6 +29,7 @@ struct args_struct {
   bool raw_flag;
   bool accurate_pp;
   bool accurate_pp_with_ops;
+  bool accurate_pp_all;
   bool measure_max_frequency_flag;
   bool full_cpu_name_flag;
   bool logo_long;
@@ -53,6 +54,7 @@ const char args_chr[] = {
   /* [ARG_LOGO_INTEL_OLD]   = */ 4,
   /* [ARG_ACCURATE_PP]      = */ 5,
   /* [ARG_ACCURATE_PP_WITH_OPS] = */ 7,
+  /* [ARG_ACCURATE_PP_ALL]  = */ 8,
   /* [ARG_MEASURE_MAX_FREQ] = */ 6,
   /* [ARG_DEBUG]            = */ 'd',
   /* [ARG_VERBOSE]          = */ 'v',
@@ -71,6 +73,7 @@ const char *args_str[] = {
   /* [ARG_LOGO_INTEL_OLD]   = */ "logo-intel-old",
   /* [ARG_ACCURATE_PP]      = */ "accurate-pp",
   /* [ARG_ACCURATE_PP_WITH_OPS] = */ "accurate-pp-with-ops",
+  /* [ARG_ACCURATE_PP_ALL]  = */ "accurate-pp-all",
   /* [ARG_MEASURE_MAX_FREQ] = */ "measure-max-freq",
   /* [ARG_DEBUG]            = */ "debug",
   /* [ARG_VERBOSE]          = */ "verbose",
@@ -109,6 +112,10 @@ bool accurate_pp(void) {
 
 bool accurate_pp_with_ops(void) {
   return args.accurate_pp_with_ops;
+}
+
+bool accurate_pp_all(void) {
+  return args.accurate_pp_all;
 }
 
 bool measure_max_frequency_flag(void) {
@@ -244,10 +251,10 @@ char* build_short_options(void) {
   c[ARG_DEBUG], c[ARG_VERBOSE],
   c[ARG_VERSION]);
 #elif ARCH_ARM
-  sprintf(str, "%c:%c:%c%c%c%c%c%c%c%c",
+  sprintf(str, "%c:%c:%c%c%c%c%c%c%c%c%c%c",
   c[ARG_STYLE], c[ARG_COLOR], c[ARG_HELP],
   c[ARG_LOGO_SHORT], c[ARG_LOGO_LONG],
-  c[ARG_ACCURATE_PP_WITH_OPS], c[ARG_MEASURE_MAX_FREQ],
+  c[ARG_ACCURATE_PP], c[ARG_ACCURATE_PP_WITH_OPS], c[ARG_ACCURATE_PP_ALL], c[ARG_MEASURE_MAX_FREQ],
   c[ARG_DEBUG], c[ARG_VERBOSE],
   c[ARG_VERSION]);
 #elif ARCH_PPC
@@ -277,6 +284,7 @@ bool parse_args(int argc, char* argv[]) {
   args.debug_flag = false;
   args.accurate_pp = false;
   args.accurate_pp_with_ops = false;
+  args.accurate_pp_all = false;
   args.full_cpu_name_flag = false;
   args.raw_flag = false;
   args.verbose_flag = false;
@@ -306,6 +314,7 @@ bool parse_args(int argc, char* argv[]) {
 #elif ARCH_ARM
     {args_str[ARG_ACCURATE_PP],          no_argument,   0, args_chr[ARG_ACCURATE_PP]          },
     {args_str[ARG_ACCURATE_PP_WITH_OPS], no_argument,   0, args_chr[ARG_ACCURATE_PP_WITH_OPS] },
+    {args_str[ARG_ACCURATE_PP_ALL],      no_argument,   0, args_chr[ARG_ACCURATE_PP_ALL]      },
     {args_str[ARG_MEASURE_MAX_FREQ],     no_argument,   0, args_chr[ARG_MEASURE_MAX_FREQ]     },
 #elif ARCH_SPARC
     {args_str[ARG_ACCURATE_PP],      no_argument,       0, args_chr[ARG_ACCURATE_PP]      },
@@ -355,6 +364,11 @@ bool parse_args(int argc, char* argv[]) {
        args.accurate_pp = true;
     }
     else if(opt == args_chr[ARG_ACCURATE_PP_WITH_OPS]) {
+       args.accurate_pp_with_ops = true;
+       args.accurate_pp = true; // implies accurate measurements
+    }
+    else if(opt == args_chr[ARG_ACCURATE_PP_ALL]) {
+       args.accurate_pp_all = true;
        args.accurate_pp_with_ops = true;
        args.accurate_pp = true; // implies accurate measurements
     }

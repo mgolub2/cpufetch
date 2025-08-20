@@ -604,7 +604,7 @@ bool print_cpufetch_sparc(struct cpuInfo* cpu, STYLE s, struct color** cs, struc
   char* manufacturing_process = get_str_process(cpu);
   char* max_frequency = get_str_freq(cpu->freq);
   char* pp = get_str_peak_performance(cpu->peak_performance);
-  if (accurate_pp_with_ops() && cpu->vis_ops_performance > 0) {
+  if (accurate_pp_with_ops() && cpu->vis_ops_performance > 0 && !accurate_pp_all()) {
     char* ops = get_str_ops(cpu->vis_ops_performance);
     size_t base_len = strlen(pp);
     size_t ops_len = strlen(ops);
@@ -613,6 +613,25 @@ bool print_cpufetch_sparc(struct cpuInfo* cpu, STYLE s, struct color** cs, struc
     free(pp);
     free(ops);
     pp = pp_ext;
+  }
+  if (accurate_pp_all()) {
+    char* ops_cpu = cpu->vis_ops_performance > 0 ? get_str_ops(cpu->vis_ops_performance) : NULL;
+    char* ops_gpu = cpu->gpu_ops_performance > 0 ? get_str_ops(cpu->gpu_ops_performance) : NULL;
+    if (ops_cpu != NULL || ops_gpu != NULL) {
+      size_t base_len = strlen(pp);
+      size_t add_len = 0;
+      if (ops_cpu) add_len += 3 + strlen(ops_cpu);
+      if (ops_gpu) add_len += 3 + strlen(ops_gpu);
+      char* pp_ext = emalloc(base_len + add_len + 1);
+      size_t written = 0;
+      memcpy(pp_ext, pp, base_len); written += base_len;
+      if (ops_cpu) { snprintf(pp_ext + written, add_len + 1, " + %s", ops_cpu); written += 3 + strlen(ops_cpu); }
+      if (ops_gpu) { snprintf(pp_ext + written, add_len - (written - base_len) + 1, " + %s", ops_gpu); }
+      free(pp);
+      if (ops_cpu) free(ops_cpu);
+      if (ops_gpu) free(ops_gpu);
+      pp = pp_ext;
+    }
   }
 
   char* features = get_str_features(cpu);
@@ -779,7 +798,7 @@ bool print_cpufetch_x86(struct cpuInfo* cpu, STYLE s, struct color** cs, struct 
   char* cpu_name = get_str_cpu_name(cpu, fcpuname);
   char* uarch = get_str_uarch(cpu);
   char* pp = get_str_peak_performance(cpu->peak_performance);
-  if (accurate_pp_with_ops() && cpu->vis_ops_performance > 0) {
+  if (accurate_pp_with_ops() && cpu->vis_ops_performance > 0 && !accurate_pp_all()) {
     char* ops = get_str_ops(cpu->vis_ops_performance);
     size_t base_len = strlen(pp);
     size_t ops_len = strlen(ops);
@@ -788,6 +807,25 @@ bool print_cpufetch_x86(struct cpuInfo* cpu, STYLE s, struct color** cs, struct 
     free(pp);
     free(ops);
     pp = pp_ext;
+  }
+  if (accurate_pp_all()) {
+    char* ops_cpu = cpu->vis_ops_performance > 0 ? get_str_ops(cpu->vis_ops_performance) : NULL;
+    char* ops_gpu = cpu->gpu_ops_performance > 0 ? get_str_ops(cpu->gpu_ops_performance) : NULL;
+    if (ops_cpu != NULL || ops_gpu != NULL) {
+      size_t base_len = strlen(pp);
+      size_t add_len = 0;
+      if (ops_cpu) add_len += 3 + strlen(ops_cpu);
+      if (ops_gpu) add_len += 3 + strlen(ops_gpu);
+      char* pp_ext = emalloc(base_len + add_len + 1);
+      size_t written = 0;
+      memcpy(pp_ext, pp, base_len); written += base_len;
+      if (ops_cpu) { snprintf(pp_ext + written, add_len + 1, " + %s", ops_cpu); written += 3 + strlen(ops_cpu); }
+      if (ops_gpu) { snprintf(pp_ext + written, add_len - (written - base_len) + 1, " + %s", ops_gpu); }
+      free(pp);
+      if (ops_cpu) free(ops_cpu);
+      if (ops_gpu) free(ops_gpu);
+      pp = pp_ext;
+    }
   }
   char* manufacturing_process = get_str_process(cpu);
   bool hybrid_architecture = cpu->next_cpu != NULL;
@@ -920,7 +958,25 @@ bool print_cpufetch_ppc(struct cpuInfo* cpu, STYLE s, struct color** cs, struct 
   char* l2 = get_str_l2(cpu->cach);
   char* l3 = get_str_l3(cpu->cach);
   char* pp = get_str_peak_performance(cpu->peak_performance);
-  if (accurate_pp_with_ops() && cpu->vis_ops_performance > 0) {
+  if (accurate_pp_all()) {
+    char* ops_cpu = cpu->vis_ops_performance > 0 ? get_str_ops(cpu->vis_ops_performance) : NULL;
+    char* ops_gpu = cpu->gpu_ops_performance > 0 ? get_str_ops(cpu->gpu_ops_performance) : NULL;
+    if (ops_cpu != NULL || ops_gpu != NULL) {
+      size_t base_len = strlen(pp);
+      size_t add_len = 0;
+      if (ops_cpu) add_len += 3 + strlen(ops_cpu);
+      if (ops_gpu) add_len += 3 + strlen(ops_gpu);
+      char* pp_ext = emalloc(base_len + add_len + 1);
+      size_t written = 0;
+      memcpy(pp_ext, pp, base_len); written += base_len;
+      if (ops_cpu) { snprintf(pp_ext + written, add_len + 1, " + %s", ops_cpu); written += 3 + strlen(ops_cpu); }
+      if (ops_gpu) { snprintf(pp_ext + written, add_len - (written - base_len) + 1, " + %s", ops_gpu); }
+      free(pp);
+      if (ops_cpu) free(ops_cpu);
+      if (ops_gpu) free(ops_gpu);
+      pp = pp_ext;
+    }
+  } else if (accurate_pp_with_ops() && cpu->vis_ops_performance > 0) {
     char* ops = get_str_ops(cpu->vis_ops_performance);
     size_t base_len = strlen(pp);
     size_t ops_len = strlen(ops);
@@ -1143,7 +1199,26 @@ bool print_cpufetch_arm(struct cpuInfo* cpu, STYLE s, struct color** cs, struct 
     }
   }
   char* pp = get_str_peak_performance(cpu->peak_performance);
-  if (accurate_pp_with_ops() && cpu->vis_ops_performance > 0) {
+  if (accurate_pp_all()) {
+    char* ops_cpu = cpu->vis_ops_performance > 0 ? get_str_ops(cpu->vis_ops_performance) : NULL;
+    char* ops_gpu = cpu->gpu_ops_performance > 0 ? get_str_ops(cpu->gpu_ops_performance) : NULL;
+    if (ops_cpu != NULL || ops_gpu != NULL) {
+      size_t base_len = strlen(pp);
+      size_t add_len = 0;
+      if (ops_cpu) add_len += 3 + strlen(ops_cpu);
+      if (ops_gpu) add_len += 3 + strlen(ops_gpu);
+      char* pp_ext = emalloc(base_len + add_len + 1);
+      size_t written = 0;
+      memcpy(pp_ext, pp, base_len); written += base_len;
+      if (ops_cpu) { snprintf(pp_ext + written, add_len + 1, " + %s", ops_cpu); written += 3 + strlen(ops_cpu); }
+      if (ops_gpu) { snprintf(pp_ext + written, add_len - (written - base_len) + 1, " + %s", ops_gpu); }
+      free(pp);
+      if (ops_cpu) free(ops_cpu);
+      if (ops_gpu) free(ops_gpu);
+      pp = pp_ext;
+    }
+  }
+  else if (accurate_pp_with_ops() && cpu->vis_ops_performance > 0) {
     char* ops = get_str_ops(cpu->vis_ops_performance);
     size_t base_len = strlen(pp);
     size_t ops_len = strlen(ops);

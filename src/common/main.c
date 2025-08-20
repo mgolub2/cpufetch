@@ -46,10 +46,12 @@ void print_help(char *argv[]) {
 #ifdef __linux__
   printf("      --%s %*s Compute the peak performance accurately (measure FP32 FLOP/s)\n", t[ARG_ACCURATE_PP], (int) (max_len-strlen(t[ARG_ACCURATE_PP])), "");
   printf("      --%s %*s In addition to FP32 FLOP/s, measure NEON integer OPS and append them (ARM)\n", t[ARG_ACCURATE_PP_WITH_OPS], (int) (max_len-strlen(t[ARG_ACCURATE_PP_WITH_OPS])), "");
+  printf("      --%s %*s Measure FP32 FLOP/s + NEON OPS + (macOS) Metal GPU OPS and append all\n", t[ARG_ACCURATE_PP_ALL], (int) (max_len-strlen(t[ARG_ACCURATE_PP_ALL])), "");
   printf("      --%s %*s Measure the max CPU frequency instead of reading it\n", t[ARG_MEASURE_MAX_FREQ], (int) (max_len-strlen(t[ARG_MEASURE_MAX_FREQ])), "");
 #else
   printf("      --%s %*s Compute the peak performance accurately (measure FP32 FLOP/s)\n", t[ARG_ACCURATE_PP], (int) (max_len-strlen(t[ARG_ACCURATE_PP])), "");
   printf("      --%s %*s In addition to FP32 FLOP/s, measure NEON integer OPS and append them (ARM)\n", t[ARG_ACCURATE_PP_WITH_OPS], (int) (max_len-strlen(t[ARG_ACCURATE_PP_WITH_OPS])), "");
+  printf("      --%s %*s Measure FP32 FLOP/s + NEON OPS + (macOS) Metal GPU OPS and append all\n", t[ARG_ACCURATE_PP_ALL], (int) (max_len-strlen(t[ARG_ACCURATE_PP_ALL])), "");
 #endif
 #endif
   printf("  -%c, --%s %*s Print this help and exit\n", c[ARG_HELP], t[ARG_HELP], (int) (max_len-strlen(t[ARG_HELP])), "");
