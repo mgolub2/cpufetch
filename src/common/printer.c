@@ -508,7 +508,7 @@ uint32_t longest_field_length(struct ascii* art, int la) {
   return max;
 }
 
-#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC)
+#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC) || defined(ARCH_PARISC)
 void print_ascii_generic(struct ascii* art, uint32_t la, int32_t termw, const char** attribute_fields, bool hybrid_architecture) {
   struct ascii_logo* logo = art->art;
   int attr_to_print = 0;

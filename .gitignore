@@ -1,2 +1,7 @@
 cpufetch
 *.o
+
+# Ignore disk images and VM artifacts
+*.qcow2
+*.img
+*.iso

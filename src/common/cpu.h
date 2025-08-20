@@ -160,7 +160,7 @@ struct cpuInfo {
   struct features* feat;
 #endif
 
-#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC)
+#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC) || defined(ARCH_PARISC)
   // CPU name from model
   char* cpu_name;
 #endif
