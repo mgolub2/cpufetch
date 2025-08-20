@@ -244,7 +244,7 @@ char* get_str_ops(int64_t ops) {
 void init_topology_struct(struct topology* topo, struct cache* cach) {
   topo->total_cores = 0;
   topo->cach = cach;
-#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC)
+#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC) || defined(ARCH_PARISC)
   topo->physical_cores = 0;
   topo->logical_cores = 0;
   topo->smt_supported = 0;

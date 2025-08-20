@@ -713,6 +713,35 @@ bool print_cpufetch_parisc(struct cpuInfo* cpu, STYLE s, struct color** cs, stru
   char* manufacturing_process = get_str_process(cpu);
   char* max_frequency = get_str_freq(cpu->freq);
   char* pp = get_str_peak_performance(cpu->peak_performance);
+  if (accurate_pp_with_ops() && cpu->vis_ops_performance > 0 && !accurate_pp_all()) {
+    char* ops = get_str_ops(cpu->vis_ops_performance);
+    size_t base_len = strlen(pp);
+    size_t ops_len = strlen(ops);
+    char* pp_ext = emalloc(base_len + 3 + ops_len + 1);
+    snprintf(pp_ext, base_len + 3 + ops_len + 1, "%s + %s", pp, ops);
+    free(pp);
+    free(ops);
+    pp = pp_ext;
+  }
+  if (accurate_pp_all()) {
+    char* ops_cpu = cpu->vis_ops_performance > 0 ? get_str_ops(cpu->vis_ops_performance) : NULL;
+    char* ops_gpu = cpu->gpu_ops_performance > 0 ? get_str_ops(cpu->gpu_ops_performance) : NULL;
+    if (ops_cpu != NULL || ops_gpu != NULL) {
+      size_t base_len = strlen(pp);
+      size_t add_len = 0;
+      if (ops_cpu) add_len += 3 + strlen(ops_cpu);
+      if (ops_gpu) add_len += 3 + strlen(ops_gpu);
+      char* pp_ext = emalloc(base_len + add_len + 1);
+      size_t written = 0;
+      memcpy(pp_ext, pp, base_len); written += base_len;
+      if (ops_cpu) { snprintf(pp_ext + written, add_len + 1, " + %s", ops_cpu); written += 3 + strlen(ops_cpu); }
+      if (ops_gpu) { snprintf(pp_ext + written, add_len - (written - base_len) + 1, " + %s", ops_gpu); }
+      free(pp);
+      if (ops_cpu) free(ops_cpu);
+      if (ops_gpu) free(ops_gpu);
+      pp = pp_ext;
+    }
+  }
 
   if(cpu_name != NULL) {
     setAttribute(art, ATTRIBUTE_NAME, cpu_name);
