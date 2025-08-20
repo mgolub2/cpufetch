@@ -57,8 +57,9 @@ char* get_str_cpu_name(struct cpuInfo* cpu, bool fcpuname) {
 }
 
 char* get_str_sockets(struct topology* topo) {
-  char* string = emalloc(sizeof(char) * 2);
-  int32_t sanity_ret = snprintf(string, 2, "%d", topo->sockets);
+  // support multi-digit sockets count
+  char* string = emalloc(sizeof(char) * 6);
+  int32_t sanity_ret = snprintf(string, 6, "%d", topo->sockets);
   if(sanity_ret < 0) {
     printBug("get_str_sockets: snprintf returned a negative value for input: '%d'", topo->sockets);
     return NULL;

@@ -238,6 +238,14 @@ $C1  #######   #######    ##     ##    \
 $C1  ##   ##   ##    ##   ##     ##    \
 $C1  ##   ##   #######     #######     "
 
+// Long HP wordmark-style (monospace 74x5) matching existing style
+#define ASCII_HP_L \
+"$C1  ##   ##    #######      #######      #######      #######      #######   \
+:$C1  ##   ##    ##     ##    ##     ##    ##     ##    ##     ##    ##     ## \
+:$C1  #######    ##     ##    #######      #######      #######      ##     ## \
+:$C1  ##   ##    ##     ##    ##     ##    ##     ##    ##     ##    ##     ## \
+:$C1  ##   ##    #######      #######      #######      #######      #######   "
+
 // inspired by the neofetch mac logo
 #define ASCII_APPLE \
 "$C1                   .\"c.         \
@@ -718,6 +726,7 @@ asciiL logo_intel_l     = { ASCII_INTEL_L,     62, 19, true,  {C_BG_CYAN, C_BG_W
 asciiL logo_intel_l_new = { ASCII_INTEL_L_NEW, 57, 14, true,  {C_BG_CYAN, C_BG_WHITE, C_BG_BLUE},             {C_FG_CYAN,  C_FG_WHITE}     };
 asciiL logo_arm_l       = { ASCII_ARM_L,       60,  8, true,  {C_BG_CYAN},                                    {C_FG_WHITE, C_FG_CYAN}      };
 asciiL logo_ibm_l       = { ASCII_IBM_L,       62, 13, true,  {C_BG_CYAN, C_FG_WHITE},                        {C_FG_CYAN,  C_FG_WHITE}     };
+asciiL logo_hp_l        = { ASCII_HP_L,        74,  5, false, {C_FG_CYAN, C_FG_WHITE},                        {C_FG_CYAN,  C_FG_WHITE}     };
 asciiL logo_starfive_l  = { ASCII_STARFIVE_L,  50, 22, false, {C_FG_WHITE},                                   {C_FG_WHITE, C_FG_BLUE}      };
 asciiL logo_sifive_l    = { ASCII_SIFIVE_L,    53, 21, true,  {C_BG_WHITE, C_BG_BLACK},                       {C_FG_WHITE, C_FG_CYAN}      };
 asciiL logo_nvidia_l    = { ASCII_NVIDIA_L,    50, 15, false, {C_FG_GREEN, C_FG_WHITE},                       {C_FG_WHITE, C_FG_GREEN}     };

@@ -113,13 +113,13 @@ struct topology* get_topology_info(struct cache* cach) {
     }
   }
 
-  if (topo->sockets == 0) topo->sockets = 1;
+  if (topo->sockets <= 0) topo->sockets = 1;
   topo->physical_cores = (unique_pairs > 0) ? (unique_pairs / topo->sockets) : (topo->total_cores > 0 ? topo->total_cores / topo->sockets : 1);
   if (topo->physical_cores <= 0) topo->physical_cores = 1;
   topo->logical_cores  = (topo->total_cores > 0) ? (topo->total_cores / topo->sockets) : topo->physical_cores;
   if (topo->logical_cores <= 0) topo->logical_cores = topo->physical_cores;
   topo->smt_supported = topo->logical_cores / topo->physical_cores;
-  if (topo->smt_supported == 0) topo->smt_supported = 1;
+  if (topo->smt_supported <= 0) topo->smt_supported = 1;
 
   free(core_ids);
   free(package_ids);
