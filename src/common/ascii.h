@@ -240,11 +240,11 @@ $C1 @@@   @@@  @@           @@       @@    @@   "
 
 // Long HP PA wordmark-style with blocky design
 #define ASCII_HP_L \
-"$C1 @@@   @@@   @@@@@@@@     @@@@@@@@     @@@@@@@    \
+"$C1 @@@   @@@   @@@@@@@@     @@@@@@@@     @@@@@@@     \
 $C1 @@@   @@@   @@     @@    @@     @@    @@     @@   \
 $C1 @@@@@@@@@   @@@@@@@@     @@@@@@@@    @@@@@@@@@@   \
 $C1 @@@   @@@   @@           @@         @@        @@  \
-$C1 @@@   @@@   @@           @@        @@          @@  "
+$C1 @@@   @@@   @@           @@        @@          @@ "
 
 // inspired by the neofetch mac logo
 #define ASCII_APPLE \
