@@ -49,6 +49,7 @@
 #define LINE_BUFFER_SIZE    (1<<16)
 #define MAX_ATTRIBUTES      100
 #define MAX_TERM_SIZE       1024
+#define NUM_COLORS          5
 
 enum {
 #if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC) || defined(ARCH_PARISC)
@@ -707,6 +708,22 @@ bool print_cpufetch_parisc(struct cpuInfo* cpu, STYLE s, struct color** cs, stru
   struct ascii* art = set_ascii(get_cpu_vendor(cpu), s);
   if(art == NULL)
     return false;
+  
+  // Default to HP colors for PA-RISC if no colors specified
+  struct color** hp_colors = NULL;
+  if(cs == NULL) {
+    hp_colors = emalloc(sizeof(struct color *) * NUM_COLORS);
+    for(int i=0; i < NUM_COLORS; i++) {
+      hp_colors[i] = emalloc(sizeof(struct color));
+    }
+    // HP PA-RISC colors: R:65, G:109, B:120
+    hp_colors[0]->R = 65; hp_colors[0]->G = 109; hp_colors[0]->B = 120;
+    hp_colors[1]->R = 65; hp_colors[1]->G = 109; hp_colors[1]->B = 120;
+    hp_colors[2]->R = 0; hp_colors[2]->G = 0; hp_colors[2]->B = 0;
+    hp_colors[3]->R = 240; hp_colors[3]->G = 240; hp_colors[3]->B = 240;
+    hp_colors[4]->R = 65; hp_colors[4]->G = 109; hp_colors[4]->B = 120;
+    cs = hp_colors;
+  }
 
   char* cpu_name = get_str_cpu_name(cpu, fcpuname);
   char* uarch = get_str_uarch(cpu);
@@ -795,7 +812,8 @@ bool print_cpufetch_parisc(struct cpuInfo* cpu, STYLE s, struct color** cs, stru
 
   print_ascii_generic(art, longest_attribute, term->w, attribute_fields, false);
 
-  if(cs != NULL) free_colors_struct(cs);
+  if(hp_colors != NULL) free_colors_struct(hp_colors);
+  else if(cs != NULL) free_colors_struct(cs);
   if(cpu->cach != NULL) free_cache_struct(cpu->cach);
   if(cpu->topo != NULL) free_topo_struct(cpu->topo);
   free_freq_struct(cpu->freq);
