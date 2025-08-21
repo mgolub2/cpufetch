@@ -28,6 +28,7 @@
   #include "../riscv/soc.h"
 #elif ARCH_SPARC
   #include "../sparc/sparc.h"
+  #include "../sparc/uarch.h"
 #elif ARCH_PARISC
   #include "../parisc/parisc.h"
   #include "../parisc/uarch.h"

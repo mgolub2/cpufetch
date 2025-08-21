@@ -222,8 +222,9 @@ char* get_str_ops(int64_t ops) {
     return str;
   }
 
-  // Buffer size for "XXXX.XX XOPS" format (max 14 chars + null terminator)
-  const size_t max_size = 15;
+  // Buffer size for worst-case integer path "-9223372036854775808 OPS" (26 chars) + null
+  // Use a safe static buffer size to silence -Wformat-truncation on some compilers
+  const size_t max_size = 32;
   char* str = ecalloc(max_size, sizeof(char));
   
   // Use integer comparisons to avoid unnecessary floating point conversion
