@@ -717,7 +717,7 @@ asciiL logo_nxp         = { ASCII_NXP,         55,  8, false, {C_FG_YELLOW, C_FG
 asciiL logo_amlogic     = { ASCII_AMLOGIC,     58,  8, false, {C_FG_BLUE},                                    {C_FG_BLUE,    C_FG_B_WHITE} };
 asciiL logo_marvell     = { ASCII_MARVELL,     56, 10, false, {C_FG_B_BLACK},                                 {C_FG_B_BLACK, C_FG_B_WHITE} };
 asciiL logo_spacemit    = { ASCII_SPACEMIT,    27, 18, false, {C_FG_B_GREEN},                                 {C_FG_B_GREEN, C_FG_B_WHITE} };
-asciiL logo_sun         = { ASCII_SUN,         30, 16, false, {C_FG_MAGENTA},                                 {C_FG_MAGENTA, C_FG_WHITE}   };
+asciiL logo_sun         = { ASCII_SUN,         30, 15, false, {C_FG_MAGENTA},                                 {C_FG_MAGENTA, C_FG_WHITE}   };
 asciiL logo_sun_l       = { ASCII_SUN_L,       64, 12, false, {C_FG_MAGENTA},                                 {C_FG_MAGENTA, C_FG_WHITE}   };
 
 // Long variants          | ----------------------------------------------------------------------------------------------------------------|
