@@ -190,7 +190,8 @@ static int64_t measure_fp32_flops(struct topology* topo) {
       if(e>=target_seconds){
         double per_core=((double)iters*ops_per_iter)/e;
         double total=per_core*(double)(topo->physical_cores*topo->sockets);
-        if(total<=0.0) return -1; return (int64_t)total;
+        if(total<=0.0) return -1;
+        return (int64_t)total;
       }
     }
   }
@@ -201,7 +202,7 @@ static int64_t measure_fp32_flops(struct topology* topo) {
 static int64_t measure_altivec_ops(struct topology* topo){
   if(!accurate_pp_with_ops()) return -1;
   struct timeval t0,t1; double target_seconds=0.6; uint64_t iters=0; int ops_per_iter=0;
-  typedef vector unsigned char v16u8;
+  typedef __vector unsigned char v16u8;
   v16u8 a = (v16u8){1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
   v16u8 b = (v16u8){16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1};
   v16u8 c = (v16u8){0};
@@ -218,7 +219,8 @@ static int64_t measure_altivec_ops(struct topology* topo){
       if(e>=target_seconds){
         double per_core=((double)iters*ops_per_iter)/e;
         double total=per_core*(double)(topo->physical_cores*topo->sockets);
-        if(total<=0.0) return -1; return (int64_t)total;
+        if(total<=0.0) return -1;
+        return (int64_t)total;
       }
     }
   }
