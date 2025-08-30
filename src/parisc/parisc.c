@@ -32,11 +32,11 @@ struct cache* get_cache_info(struct cpuInfo* cpu) {
   struct cache* cach = emalloc(sizeof(struct cache));
   init_cache_struct(cach);
 
-  // Try generic sysfs cache sizes
-  cach->L1i->size = get_l1i_cache_size(0);
-  cach->L1d->size = get_l1d_cache_size(0);
-  cach->L2->size = get_l2_cache_size(0);
-  cach->L3->size = get_l3_cache_size(0);
+  // Prefer PARISC-specific /proc/cpuinfo keys; fallback to generic sysfs
+  cach->L1i->size = get_l1i_cache_size_parisc(0);
+  cach->L1d->size = get_l1d_cache_size_parisc(0);
+  cach->L2->size = get_l2_cache_size_parisc(0);
+  cach->L3->size = get_l3_cache_size_parisc(0);
 
   if(cach->L1i->size > 0) {
     cach->L1i->exists = true;
