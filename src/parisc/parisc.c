@@ -89,10 +89,9 @@ struct topology* get_topology_info(struct cache* cach) {
   if(!fill_package_ids_from_sys(package_ids, topo->total_cores)) {
     printWarn("fill_package_ids_from_sys failed, output may be incomplete/invalid");
     // Use package_cpus bitmaps via common helper when available
-    topo->sockets = get_num_sockets_package_cpus(topo);
-    if (topo->sockets == UNKNOWN_DATA || topo->sockets <= 0) {
-      topo->sockets = 1;
-    }
+    int sockets_signed = get_num_sockets_package_cpus(topo);
+    if (sockets_signed <= 0) sockets_signed = 1;
+    topo->sockets = (uint32_t)sockets_signed;
   }
   else {
     int *package_ids_count = emalloc(sizeof(int) * topo->total_cores);
@@ -118,10 +117,13 @@ struct topology* get_topology_info(struct cache* cach) {
     }
   }
 
-  if (topo->sockets <= 0) topo->sockets = 1;
-  topo->physical_cores = (unique_pairs > 0) ? (unique_pairs / topo->sockets) : (topo->total_cores > 0 ? topo->total_cores / topo->sockets : 1);
+  if (topo->sockets == 0) topo->sockets = 1;
+  int32_t sockets_s = (int32_t)topo->sockets;
+  topo->physical_cores = (unique_pairs > 0)
+    ? (int32_t)(unique_pairs / sockets_s)
+    : (topo->total_cores > 0 ? (topo->total_cores / sockets_s) : 1);
   if (topo->physical_cores <= 0) topo->physical_cores = 1;
-  topo->logical_cores  = (topo->total_cores > 0) ? (topo->total_cores / topo->sockets) : topo->physical_cores;
+  topo->logical_cores  = (topo->total_cores > 0) ? (topo->total_cores / sockets_s) : topo->physical_cores;
   if (topo->logical_cores <= 0) topo->logical_cores = topo->physical_cores;
   topo->smt_supported = topo->logical_cores / topo->physical_cores;
   if (topo->smt_supported <= 0) topo->smt_supported = 1;

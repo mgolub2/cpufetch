@@ -267,7 +267,7 @@ char* build_short_options(void) {
   c[ARG_DEBUG], c[ARG_VERBOSE],
   c[ARG_VERSION]);
 #elif ARCH_PARISC
-  sprintf(str, "%c:%c:%c%c%c%c%c%c%c",
+  sprintf(str, "%c:%c:%c%c%c%c%c%c%c%c",
   c[ARG_STYLE], c[ARG_COLOR], c[ARG_HELP],
   c[ARG_LOGO_SHORT], c[ARG_LOGO_LONG],
   c[ARG_ACCURATE_PP], c[ARG_ACCURATE_PP_WITH_OPS],

@@ -77,7 +77,13 @@ ifneq ($(OS),Windows_NT)
 		SRC_DIR=src/parisc/
 		SOURCE += $(COMMON_SRC) $(SRC_DIR)parisc.c $(SRC_DIR)uarch.c $(SRC_DIR)udev.c
 		HEADERS += $(COMMON_HDR) $(SRC_DIR)parisc.h $(SRC_DIR)uarch.h $(SRC_DIR)udev.h
-		CFLAGS += -DARCH_PARISC -Wno-unused-parameter -std=c99 -fstack-protector-all
+		# Add -fstack-protector-all only if supported by the compiler/target
+		is_ssp_flag_supported := $(shell printf 'int main(){return 0;}\n' | $(CC) -fstack-protector-all -x c - -o /dev/null 2>/dev/null && echo yes)
+		ifneq ($(is_ssp_flag_supported),)
+			CFLAGS += -DARCH_PARISC -Wno-unused-parameter -std=c99 -fstack-protector-all
+		else
+			CFLAGS += -DARCH_PARISC -Wno-unused-parameter -std=c99
+		endif
 	else ifeq ($(arch), $(filter $(arch), sparc64 sparc))
 		SRC_DIR=src/sparc/
 		SOURCE += $(COMMON_SRC) $(SRC_DIR)sparc.c $(SRC_DIR)uarch.c $(SRC_DIR)udev.c
