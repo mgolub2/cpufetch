@@ -1,3 +1,8 @@
+// Ensure PARISC-specific fields are visible to static analysis
+#ifndef ARCH_PARISC
+#define ARCH_PARISC 1
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -151,10 +156,31 @@ struct frequency* get_frequency_info(void) {
   return freq;
 }
 
+// Roughly infer FLOPs-per-cycle from known PA-RISC models.
+// Many PA-8xxx parts support fused multiply-add throughput (≈2 FLOPs/cycle).
+// Fall back to 1 FLOP/cycle if unknown.
+static int parisc_flops_per_cycle(struct cpuInfo* cpu) {
+  if(cpu == NULL || cpu->cpu_name == NULL) return 1;
+  const char* name = cpu->cpu_name;
+
+  // Simple heuristic: treat PA-8xxx as having FMA-class throughput
+  // (e.g., PA-8700/8800/8900). Keep conservative elsewhere.
+  if(strstr(name, "PA8") != NULL || strstr(name, "PA-8") != NULL || strstr(name, "PA 8") != NULL)
+    return 2;
+
+  // Specific matches in case the string lacks the generic patterns
+  if(strstr(name, "PA8700") != NULL || strstr(name, "PA-8700") != NULL) return 2;
+  if(strstr(name, "PA8800") != NULL || strstr(name, "PA-8800") != NULL) return 2;
+  if(strstr(name, "PA8900") != NULL || strstr(name, "PA-8900") != NULL) return 2;
+
+  return 1;
+}
+
 static int64_t get_peak_performance(struct cpuInfo* cpu, struct topology* topo, int64_t freq) {
   if(freq == UNKNOWN_DATA) return -1;
-  // Conservative: 1 FLOP per cycle per core (baseline)
-  int64_t flops = topo->physical_cores * topo->sockets * (freq * 1000000);
+  // Estimate similar to x86 approach: cores * freq * flops-per-cycle
+  int flops_per_cycle = parisc_flops_per_cycle(cpu); // default 1, PA-8xxx → 2
+  int64_t flops = topo->physical_cores * topo->sockets * (freq * 1000000) * (int64_t)flops_per_cycle;
   return flops;
 }
 
@@ -168,23 +194,46 @@ struct hypervisor* get_hp_info(void) {
 
 // Accurate peak performance using runtime measurement (scalar FP32)
 static int64_t measure_peak_performance_f32(struct topology* topo) {
-  if(!accurate_pp()) return -1;
+  // Enable when --accurate-pp is passed, or when CPUFETCH_MEASURE_SP_FLOPS=1
+  const char* env = getenv("CPUFETCH_MEASURE_SP_FLOPS");
+  bool enabled = accurate_pp() || (env != NULL && env[0] == '1');
+  if(!enabled) return -1;
+
   struct timeval t0, t1;
+  // Default run time; can be overridden with CPUFETCH_MEASURE_SP_FLOPS_SECS
+  double target_seconds = 2.0;
+  if(env != NULL && env[0] == '1') {
+    const char* dur = getenv("CPUFETCH_MEASURE_SP_FLOPS_SECS");
+    if(dur != NULL) {
+      double v = atof(dur);
+      if(v > 0.05 && v < 30.0) target_seconds = v;
+    }
+  }
+
   volatile float a = 1.0f, b = 1.0001f, c = 0.9997f, d = 1.0003f;
   volatile float e = 0.5f, f = 1.5f, g = 2.0f, h = -0.25f;
-  int ops_per_iter = 32; // scalar FLOPs per loop body
+  int ops_per_iter = 32; // scalar FLOPs per loop body (see 4x blocks below)
   uint64_t iters = 0;
   if(gettimeofday(&t0, NULL) != 0) return -1;
   for(;;) {
+    // 1st 8 FLOPs
     a = a + b; b = b * c; c = c + d; d = d * a;
     e = e + f; f = f * g; g = g + h; h = h * e;
+    // 2nd 8 FLOPs
     a = a + b; b = b * c; c = c + d; d = d * a;
     e = e + f; f = f * g; g = g + h; h = h * e;
+    // 3rd 8 FLOPs
+    a = a + b; b = b * c; c = c + d; d = d * a;
+    e = e + f; f = f * g; g = g + h; h = h * e;
+    // 4th 8 FLOPs → 32 total per iteration
+    a = a + b; b = b * c; c = c + d; d = d * a;
+    e = e + f; f = f * g; g = g + h; h = h * e;
+
     iters++;
     if((iters & 0x3FF) == 0) {
       if(gettimeofday(&t1, NULL) != 0) break;
       double elapsed = (double)(t1.tv_sec - t0.tv_sec) + (double)(t1.tv_usec - t0.tv_usec) / 1e6;
-      if(elapsed >= 2.0) {
+      if(elapsed >= target_seconds) {
         double flops_per_core = ((double)iters * ops_per_iter) / elapsed;
         double total_flops = flops_per_core * (double)(topo->physical_cores * topo->sockets);
         if(total_flops <= 0.0) return -1;
