@@ -141,7 +141,15 @@ debug: $(OUTPUT)
 static: CFLAGS += -static -O3
 static: $(OUTPUT)
 
-strict: CFLAGS += -O2 -Werror -fsanitize=undefined -D_FORTIFY_SOURCE=2
+# Detect if UBSan is available for this compiler/target
+is_ubsan_supported := $(shell printf 'int main(){return 0;}\n' | $(CC) -fsanitize=undefined -x c - -o /dev/null 2>/dev/null && echo yes)
+ifneq ($(is_ubsan_supported),)
+STRICT_SAN_FLAGS := -fsanitize=undefined
+else
+$(warning UBSan not available; building strict without -fsanitize=undefined)
+endif
+
+strict: CFLAGS += -O2 -Werror $(STRICT_SAN_FLAGS) -D_FORTIFY_SOURCE=2
 strict: $(OUTPUT)
 
 freq_nov.o: Makefile $(SRC_DIR)freq/freq_nov.c $(SRC_DIR)freq/freq_nov.h $(SRC_DIR)freq/freq.h
