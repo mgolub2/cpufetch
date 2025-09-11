@@ -1291,6 +1291,18 @@ struct system_on_chip* guess_soc_apple(struct system_on_chip* soc) {
       soc->vendor = SOC_VENDOR_UNKNOWN;
     }
   }
+  else if(cpu_family == CPUFAMILY_ARM_M4) {
+    // Check M4 vs M4 Pro based on physical core count
+    // M4: up to 10 cores total; M4 Pro: up to 14 cores per Apple specs
+    // Ref: Mac mini (2024) tech specs
+    uint32_t physicalcpu = get_sys_info_by_name("hw.physicalcpu");
+    if(physicalcpu <= 10) {
+      fill_soc(soc, "M4", SOC_APPLE_M4, 3);
+    }
+    else {
+      fill_soc(soc, "M4 Pro", SOC_APPLE_M4_PRO, 3);
+    }
+  }
   else {
     printBugCheckRelease("Found invalid cpu_family: 0x%.8X", cpu_family);
     soc->vendor = SOC_VENDOR_UNKNOWN;

@@ -30,6 +30,11 @@
 #define CPUFAMILY_ARM_EVEREST_SAWTOOTH_PRO 0x5F4DEA93
 #define CPUFAMILY_ARM_EVEREST_SAWTOOTH_MAX 0x72015832
 
+// M4 / A18
+// M4: https://support.apple.com/en-us/121555 (Mac mini 2024 tech specs)
+// Detected hw.cpufamily value seen in the field for M4: 0x6F5129AC
+#define CPUFAMILY_ARM_M4                 0x6F5129AC
+
 // For detecting different M1 types
 // NOTE: Could also be achieved detecting different
 // MIDR values (e.g., APPLE_CPU_PART_M1_ICESTORM_PRO)

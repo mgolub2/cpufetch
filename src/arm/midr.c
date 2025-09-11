@@ -573,6 +573,43 @@ void fill_cpu_info_everest_sawtooth(struct cpuInfo* cpu, uint32_t pcores, uint32
   eve->next_cpu = NULL;
 }
 
+void fill_cpu_info_m4(struct cpuInfo* cpu, uint32_t pcores, uint32_t ecores) {
+  // Until public MIDR part codes for M4 are widely available, reuse M3
+  // core identifiers to classify big/little cores for display purposes.
+  // 1. Fill LITTLE (M4 E-cores)
+  struct cpuInfo* lil = cpu;
+
+  lil->midr = MIDR_APPLE_M3_SAWTOOTH; // placeholder for M4 E-cores
+  lil->arch = get_uarch_from_midr(lil->midr, lil);
+  lil->cach = get_cache_info(lil);
+  lil->feat = get_features_info();
+  lil->topo = malloc(sizeof(struct topology));
+  lil->topo->cach = lil->cach;
+  lil->topo->total_cores = ecores;
+  lil->freq = malloc(sizeof(struct frequency));
+  lil->freq->base = UNKNOWN_DATA;
+  lil->freq->max = 2800; // conservative default
+  lil->hv = malloc(sizeof(struct hypervisor));
+  lil->hv->present = false;
+  lil->next_cpu = malloc(sizeof(struct cpuInfo));
+
+  // 2. Fill BIG (M4 P-cores)
+  struct cpuInfo* big = lil->next_cpu;
+  big->midr = MIDR_APPLE_M3_EVEREST; // placeholder for M4 P-cores
+  big->arch = get_uarch_from_midr(big->midr, big);
+  big->cach = get_cache_info(big);
+  big->feat = get_features_info();
+  big->topo = malloc(sizeof(struct topology));
+  big->topo->cach = big->cach;
+  big->topo->total_cores = pcores;
+  big->freq = malloc(sizeof(struct frequency));
+  big->freq->base = UNKNOWN_DATA;
+  big->freq->max = 4200; // conservative default
+  big->hv = malloc(sizeof(struct hypervisor));
+  big->hv->present = false;
+  big->next_cpu = NULL;
+}
+
 struct cpuInfo* get_cpu_info_mach(struct cpuInfo* cpu) {
   // https://developer.apple.com/documentation/kernel/1387446-sysctlbyname/determining_system_capabilities
   uint32_t nperflevels = get_sys_info_by_name("hw.nperflevels");
@@ -611,6 +648,11 @@ struct cpuInfo* get_cpu_info_mach(struct cpuInfo* cpu) {
           cpu_family == CPUFAMILY_ARM_EVEREST_SAWTOOTH_PRO ||
           cpu_family == CPUFAMILY_ARM_EVEREST_SAWTOOTH_MAX) {
     fill_cpu_info_everest_sawtooth(cpu, pcores, ecores);
+    cpu->soc = get_soc(cpu);
+    cpu->peak_performance = get_peak_performance(cpu);
+  }
+  else if(cpu_family == CPUFAMILY_ARM_M4) {
+    fill_cpu_info_m4(cpu, pcores, ecores);
     cpu->soc = get_soc(cpu);
     cpu->peak_performance = get_peak_performance(cpu);
   }
