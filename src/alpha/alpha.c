@@ -38,6 +38,8 @@ static char* get_cpu_name_from_cpuinfo(void) {
   char* s = get_field_from_cpuinfo("cpu\t\t: ");
   if (!s) s = get_field_from_cpuinfo("cpu model\t: ");
   if (!s) s = get_field_from_cpuinfo("model name\t: ");
+  if (!s) s = get_field_from_cpuinfo("cpu\t: ");
+  if (!s) s = get_field_from_cpuinfo("Processor\t: ");
   return s;
 }
 
@@ -45,13 +47,15 @@ struct cache* get_cache_info(struct cpuInfo* cpu) {
   struct cache* cach = emalloc(sizeof(struct cache));
   init_cache_struct(cach);
 
-  // Alpha exposes limited cache info in modern kernels; keep conservative defaults
-  cach->max_cache_level = 2;
-  for(int i=0; i < cach->max_cache_level + 1; i++) {
-    cach->cach_arr[i]->exists = true;
-    cach->cach_arr[i]->num_caches = 1;
-    cach->cach_arr[i]->size = 0;
-  }
+  // Fill from sysfs when possible, fallback to 0
+  long l1i = get_l1i_cache_size(0);
+  long l1d = get_l1d_cache_size(0);
+  long l2  = get_l2_cache_size(0);
+
+  cach->max_cache_level = 0;
+  if (l1i > 0) { cach->L1i->exists = true; cach->L1i->num_caches = 1; cach->L1i->size = (int32_t)l1i; cach->max_cache_level = 1; }
+  if (l1d > 0) { cach->L1d->exists = true; cach->L1d->num_caches = 1; cach->L1d->size = (int32_t)l1d; cach->max_cache_level = 2; }
+  if (l2  > 0) { cach->L2 ->exists = true; cach->L2 ->num_caches = 1; cach->L2 ->size = (int32_t)l2;  cach->max_cache_level = 3; }
   return cach;
 }
 
@@ -59,12 +63,12 @@ struct topology* get_topology_info(struct cache* cach) {
   struct topology* topo = emalloc(sizeof(struct topology));
   init_topology_struct(topo, cach);
 
-  long online = sysconf(_SC_NPROCESSORS_ONLN);
-  if (online <= 0) online = 1;
-  topo->total_cores = (int32_t)online;
+  int cores = get_ncores_from_cpuinfo();
+  if (cores <= 0) cores = 1;
+  topo->total_cores = cores;
   topo->sockets = 1;
-  topo->physical_cores = topo->total_cores;
-  topo->logical_cores = topo->total_cores;
+  topo->physical_cores = cores;
+  topo->logical_cores = cores;
   topo->smt_supported = 1;
   return topo;
 }
@@ -72,11 +76,13 @@ struct topology* get_topology_info(struct cache* cach) {
 struct frequency* get_frequency_info(void) {
   struct frequency* freq = emalloc(sizeof(struct frequency));
   freq->measured = false;
-  freq->max = get_max_freq_from_file(0);
-  freq->base = get_min_freq_from_file(0);
+  long max_khz = get_max_freq_from_file(0);
+  long min_khz = get_min_freq_from_file(0);
+  if (max_khz != UNKNOWN_DATA) freq->max = (int32_t)max_khz;
+  if (min_khz != UNKNOWN_DATA) freq->base = (int32_t)min_khz;
   if(freq->max == UNKNOWN_DATA) {
     long mhz = get_frequency_from_cpuinfo_alpha();
-    if (mhz != UNKNOWN_DATA) freq->max = mhz;
+    if (mhz != UNKNOWN_DATA) freq->max = (int32_t)mhz;
   }
   return freq;
 }

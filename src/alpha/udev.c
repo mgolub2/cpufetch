@@ -21,4 +21,12 @@ long get_frequency_from_cpuinfo_alpha(void) {
   return v;
 }
 
+// Try multiple Alpha-specific keys and return first non-empty value (caller frees)
+char* alpha_cpuinfo_get_value_for_key(const char* key) {
+  char* v = get_field_from_cpuinfo((char*)key);
+  if (v && v[0] != '\0') return v;
+  if (v) free(v);
+  return NULL;
+}
+
 
