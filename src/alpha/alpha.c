@@ -34,23 +34,30 @@ static char *hv_vendors_name[] = {
 };
 
 static char* get_cpu_name_from_cpuinfo(void) {
-  // Try several Alpha cpuinfo keys
-  char* s = get_field_from_cpuinfo("cpu\t\t: ");
-  if (!s) s = get_field_from_cpuinfo("cpu model\t: ");
-  if (!s) s = get_field_from_cpuinfo("model name\t: ");
-  if (!s) s = get_field_from_cpuinfo("cpu\t: ");
-  if (!s) s = get_field_from_cpuinfo("Processor\t: ");
-  return s;
+  // Alpha /proc/cpuinfo uses "cpu model" for the model name
+  char* model = get_field_from_cpuinfo("cpu model\t\t: ");
+  if (model) {
+    // Prepend "Alpha " if not already present
+    if (strstr(model, "Alpha") == NULL && strstr(model, "alpha") == NULL) {
+      size_t len = strlen("Alpha ") + strlen(model) + 1;
+      char* full = emalloc(len);
+      snprintf(full, len, "Alpha %s", model);
+      free(model);
+      return full;
+    }
+    return model;
+  }
+  return NULL;
 }
 
 struct cache* get_cache_info(struct cpuInfo* cpu) {
   struct cache* cach = emalloc(sizeof(struct cache));
   init_cache_struct(cach);
 
-  // Fill from sysfs when possible, fallback to 0
-  long l1i = get_l1i_cache_size(0);
-  long l1d = get_l1d_cache_size(0);
-  long l2  = get_l2_cache_size(0);
+  // Alpha exposes cache info in /proc/cpuinfo
+  long l1i = get_l1i_cache_size_alpha();
+  long l1d = get_l1d_cache_size_alpha();
+  long l2  = get_l2_cache_size_alpha();
 
   cach->max_cache_level = 0;
   if (l1i > 0) { cach->L1i->exists = true; cach->L1i->num_caches = 1; cach->L1i->size = (int32_t)l1i; cach->max_cache_level = 1; }
@@ -63,8 +70,17 @@ struct topology* get_topology_info(struct cache* cach) {
   struct topology* topo = emalloc(sizeof(struct topology));
   init_topology_struct(topo, cach);
 
-  int cores = get_ncores_from_cpuinfo();
-  if (cores <= 0) cores = 1;
+  // Alpha reports "cpus detected" in /proc/cpuinfo
+  char* cpus_str = get_field_from_cpuinfo("cpus detected\t: ");
+  int cores = 1;
+  if (cpus_str) {
+    errno = 0;
+    char* end = NULL;
+    long val = strtol(cpus_str, &end, 10);
+    free(cpus_str);
+    if (errno == 0 && val > 0) cores = (int)val;
+  }
+  
   topo->total_cores = cores;
   topo->sockets = 1;
   topo->physical_cores = cores;

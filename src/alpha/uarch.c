@@ -34,12 +34,8 @@ static char* strdup_or_null(const char* s) {
 
 struct uarch* get_uarch(struct cpuInfo* cpu) {
   UNUSED(cpu);
-  // Alpha exposes model strings like "cpu\t\t: Alpha EV56"; try several keys
-  char* model = get_field_from_cpuinfo("cpu\t\t: ");
-  if (!model) model = get_field_from_cpuinfo("cpu model\t: ");
-  if (!model) model = get_field_from_cpuinfo("model name\t: ");
-  if (!model) model = get_field_from_cpuinfo("cpu\t: ");
-  if (!model) model = get_field_from_cpuinfo("Processor\t: ");
+  // Alpha /proc/cpuinfo has "cpu model" for the specific variant (EV67, etc.)
+  char* model = get_field_from_cpuinfo("cpu model\t\t: ");
   if (!model) model = strdup_or_null("Unknown");
   return make_uarch(model, NULL);
 }
