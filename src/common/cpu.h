@@ -202,7 +202,7 @@ struct cpuInfo {
 #endif
 };
 
-#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC) || defined(ARCH_PARISC)
+#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC) || defined(ARCH_PARISC) || defined(ARCH_ALPHA)
 char* get_str_cpu_name(struct cpuInfo* cpu, bool fcpuname);
 char* get_str_sockets(struct topology* topo);
 uint32_t get_nsockets(struct topology* topo);

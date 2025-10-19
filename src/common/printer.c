@@ -825,6 +825,93 @@ bool print_cpufetch_parisc(struct cpuInfo* cpu, STYLE s, struct color** cs, stru
 }
 #endif
 
+#ifdef ARCH_ALPHA
+bool print_cpufetch_alpha(struct cpuInfo* cpu, STYLE s, struct color** cs, struct terminal* term, bool fcpuname) {
+  struct ascii* art = set_ascii(get_cpu_vendor(cpu), s);
+  if(art == NULL)
+    return false;
+
+  char* cpu_name = get_str_cpu_name(cpu, fcpuname);
+  char* uarch = get_str_uarch(cpu);
+  char* manufacturing_process = get_str_process(cpu);
+  char* max_frequency = get_str_freq(cpu->freq);
+  char* pp = get_str_peak_performance(cpu->peak_performance);
+  if (accurate_pp_with_ops()) {
+    if (cpu->vis_ops_performance > 0) {
+      char* ops = get_str_ops(cpu->vis_ops_performance);
+      size_t base_len = strlen(pp);
+      size_t ops_len = strlen(ops);
+      char* pp_ext = emalloc(base_len + 3 + ops_len + 1);
+      snprintf(pp_ext, base_len + 3 + ops_len + 1, "%s + %s", pp, ops);
+      free(pp);
+      free(ops);
+      pp = pp_ext;
+    }
+  }
+
+  if(cpu_name != NULL) {
+    setAttribute(art, ATTRIBUTE_NAME, cpu_name);
+  }
+  if(cpu->hv->present) {
+    setAttribute(art, ATTRIBUTE_HYPERVISOR, cpu->hv->hv_name);
+  }
+  setAttribute(art, ATTRIBUTE_UARCH, uarch);
+  if (manufacturing_process != NULL) {
+    setAttribute(art, ATTRIBUTE_TECHNOLOGY, manufacturing_process);
+  }
+  setAttribute(art, ATTRIBUTE_FREQUENCY, max_frequency);
+  if (cpu->topo != NULL) {
+    char* sockets = get_str_sockets(cpu->topo);
+    char* n_cores = get_str_topology(cpu->topo, false);
+    char* n_cores_dual = get_str_topology(cpu->topo, true);
+    uint32_t socket_num = get_nsockets(cpu->topo);
+    if (socket_num > 1) {
+      if (sockets != NULL) setAttribute(art, ATTRIBUTE_SOCKETS, sockets);
+      setAttribute(art, ATTRIBUTE_NCORES, n_cores);
+      setAttribute(art, ATTRIBUTE_NCORES_DUAL, n_cores_dual);
+    } else {
+      setAttribute(art, ATTRIBUTE_NCORES, n_cores);
+    }
+  }
+  if(cpu->cach != NULL) {
+    char* l1i = NULL;
+    char* l1d = NULL;
+    char* l2 = NULL;
+    char* l3 = NULL;
+    if (cpu->cach->L1i != NULL && cpu->cach->L1i->exists) l1i = get_str_l1i(cpu->cach);
+    if (cpu->cach->L1d != NULL && cpu->cach->L1d->exists) l1d = get_str_l1d(cpu->cach);
+    if (cpu->cach->L2  != NULL && cpu->cach->L2->exists)  l2  = get_str_l2(cpu->cach);
+    if (cpu->cach->L3  != NULL && cpu->cach->L3->exists)  l3  = get_str_l3(cpu->cach);
+    if(l1i != NULL) setAttribute(art, ATTRIBUTE_L1i, l1i);
+    if(l1d != NULL) setAttribute(art, ATTRIBUTE_L1d, l1d);
+    if(l2 != NULL) setAttribute(art, ATTRIBUTE_L2, l2);
+    if(l3 != NULL) setAttribute(art, ATTRIBUTE_L3, l3);
+  }
+  setAttribute(art, ATTRIBUTE_PEAK, pp);
+
+  const char** attribute_fields = ATTRIBUTE_FIELDS;
+  uint32_t longest_attribute = longest_attribute_length(art, attribute_fields);
+  uint32_t longest_field = longest_field_length(art, longest_attribute);
+  choose_ascii_art(art, cs, term, longest_field);
+
+  if(!ascii_fits_screen(term->w, *art->art, longest_field)) {
+    attribute_fields = ATTRIBUTE_FIELDS_SHORT;
+    longest_attribute = longest_attribute_length(art, attribute_fields);
+  }
+
+  print_ascii_generic(art, longest_attribute, term->w, attribute_fields, false);
+
+  if(cs != NULL) free_colors_struct(cs);
+  if(cpu->cach != NULL) free_cache_struct(cpu->cach);
+  if(cpu->topo != NULL) free_topo_struct(cpu->topo);
+  free_freq_struct(cpu->freq);
+  free_cpuinfo_struct(cpu);
+  free(art->attributes);
+  free(art);
+  return true;
+}
+#endif
+
 #ifdef ARCH_X86
 bool choose_new_intel_logo(struct cpuInfo* cpu) {
   if(show_logo_intel_new()) return true;
@@ -1493,5 +1580,7 @@ bool print_cpufetch(struct cpuInfo* cpu, STYLE s, struct color** cs, bool show_f
   return print_cpufetch_sparc(cpu, s, cs, term, show_full_cpu_name);
 #elif ARCH_PARISC
   return print_cpufetch_parisc(cpu, s, cs, term, show_full_cpu_name);
+#elif ARCH_ALPHA
+  return print_cpufetch_alpha(cpu, s, cs, term, show_full_cpu_name);
 #endif
 }
