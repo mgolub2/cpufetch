@@ -56,7 +56,7 @@
 #define NUM_COLORS          5
 
 enum {
-#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC) || defined(ARCH_PARISC)
+#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC) || defined(ARCH_PARISC) || defined(ARCH_ALPHA)
   ATTRIBUTE_NAME,
 #elif defined(ARCH_ARM) || defined(ARCH_RISCV)
   ATTRIBUTE_SOC,
@@ -97,6 +97,8 @@ static const char* ATTRIBUTE_FIELDS [] = {
 #elif ARCH_PPC
   "Part Number:",
 #elif ARCH_SPARC
+  "Name:",
+#elif ARCH_ALPHA
   "Name:",
 #elif ARCH_PARISC
   "Name:",
@@ -513,7 +515,7 @@ uint32_t longest_field_length(struct ascii* art, int la) {
   return max;
 }
 
-#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC) || defined(ARCH_PARISC)
+#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC) || defined(ARCH_PARISC) || defined(ARCH_ALPHA)
 void print_ascii_generic(struct ascii* art, uint32_t la, int32_t termw, const char** attribute_fields, bool hybrid_architecture) {
   struct ascii_logo* logo = art->art;
   int attr_to_print = 0;
