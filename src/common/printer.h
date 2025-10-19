@@ -17,6 +17,8 @@ typedef int STYLE;
   #include "../sparc/sparc.h"
 #elif ARCH_PARISC
   #include "../parisc/parisc.h"
+#elif ARCH_ALPHA
+  #include "../alpha/alpha.h"
 #endif
 
 //                              +-----------------------------------+-----------------------+
@@ -36,8 +38,5 @@ void print_levels(struct cpuInfo* cpu);
 #endif
 
 bool print_cpufetch(struct cpuInfo* cpu, STYLE s, struct color** cs, bool fcpuname);
-#ifdef ARCH_ALPHA
-bool print_cpufetch_alpha(struct cpuInfo* cpu, STYLE s, struct color** cs, struct terminal* term, bool fcpuname);
-#endif
 
 #endif

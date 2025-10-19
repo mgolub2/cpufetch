@@ -1581,6 +1581,6 @@ bool print_cpufetch(struct cpuInfo* cpu, STYLE s, struct color** cs, bool show_f
 #elif ARCH_PARISC
   return print_cpufetch_parisc(cpu, s, cs, term, show_full_cpu_name);
 #elif ARCH_ALPHA
-  return print_cpufetch_alpha(cpu, s, cs, term, show_full_cpu_name);
+  return print_cpufetch_parisc(cpu, s, cs, term, show_full_cpu_name);
 #endif
 }
