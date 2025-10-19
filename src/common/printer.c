@@ -445,8 +445,7 @@ void choose_ascii_art(struct ascii* art, struct color** cs, struct terminal* ter
 #elif ARCH_SPARC
   art->art = choose_ascii_art_aux(&logo_sun_l, &logo_sun, term, lf);
 #elif ARCH_ALPHA
-  // Use a generic logo for Alpha until a DEC/Compaq one is added
-  art->art = &logo_unknown;
+  art->art = choose_ascii_art_aux(&logo_alpha_l, &logo_alpha, term, lf);
 #elif ARCH_PARISC
   // Use HP logo styling for PA-RISC systems
   art->art = choose_ascii_art_aux(&logo_hp_l, &logo_hp, term, lf);

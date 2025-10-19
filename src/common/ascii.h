@@ -246,6 +246,14 @@ $C1 @@@@@@@@@   @@@@@@@@     @@@@@@@@    @@@@@@@@@@   \
 $C1 @@@   @@@   @@           @@         @@        @@  \
 $C1 @@@   @@@   @@           @@        @@          @@ "
 
+// Minimal DEC Alpha wordmark (short)
+#define ASCII_ALPHA \
+"$C1ALPHA$CR     "
+
+// Minimal DEC Alpha wordmark (long)
+#define ASCII_ALPHA_L \
+"$C1ALPHA CPU$CR          "
+
 // inspired by the neofetch mac logo
 #define ASCII_APPLE \
 "$C1                   .\"c.         \
@@ -731,5 +739,7 @@ asciiL logo_starfive_l  = { ASCII_STARFIVE_L,  50, 22, false, {C_FG_WHITE},     
 asciiL logo_sifive_l    = { ASCII_SIFIVE_L,    53, 21, true,  {C_BG_WHITE, C_BG_BLACK},                       {C_FG_WHITE, C_FG_CYAN}      };
 asciiL logo_nvidia_l    = { ASCII_NVIDIA_L,    50, 15, false, {C_FG_GREEN, C_FG_WHITE},                       {C_FG_WHITE, C_FG_GREEN}     };
 asciiL logo_unknown     = { NULL,               0,  0, false, {COLOR_NONE},                                   {COLOR_NONE, COLOR_NONE}     };
+asciiL logo_alpha       = { ASCII_ALPHA,       10,  1, false, {C_FG_RED},                                     {C_FG_WHITE,   C_FG_RED}     };
+asciiL logo_alpha_l     = { ASCII_ALPHA_L,     20,  1, false, {C_FG_RED},                                     {C_FG_WHITE,   C_FG_RED}     };
 
 #endif
