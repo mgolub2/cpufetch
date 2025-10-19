@@ -94,7 +94,7 @@ struct cache {
 struct topology {
   int32_t total_cores;  
   struct cache* cach;
-#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC) || defined(ARCH_PARISC)
+#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC) || defined(ARCH_PARISC) || defined(ARCH_ALPHA)
   int32_t physical_cores;
   int32_t logical_cores;
   uint32_t sockets;
@@ -160,7 +160,7 @@ struct cpuInfo {
   struct features* feat;
 #endif
 
-#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC) || defined(ARCH_PARISC)
+#if defined(ARCH_X86) || defined(ARCH_PPC) || defined(ARCH_SPARC) || defined(ARCH_PARISC) || defined(ARCH_ALPHA)
   // CPU name from model
   char* cpu_name;
 #endif
