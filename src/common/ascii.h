@@ -246,23 +246,22 @@ $C1 @@@@@@@@@   @@@@@@@@     @@@@@@@@    @@@@@@@@@@   \
 $C1 @@@   @@@   @@           @@         @@        @@  \
 $C1 @@@   @@@   @@           @@        @@          @@ "
 
-// DEC Alpha logo (short, IBM-style)
+// DEC (Digital) block-style wordmark (short)
 #define ASCII_ALPHA \
-"$C1 #####    ######   #####  \
-$C1 ##  ##   ##      ##   ## \
-$C1 ##  ##   #####   ##      \
-$C1 ##  ##   ##      ##   ## \
-$C1 #####    ######   #####  "
+"$C1######   ######   ######      ######   \
+$C1##   ##   ##       ##    ##    ##       \
+$C1######    #####    ##    ##    #####    \
+$C1##   ##   ##       ##    ##    ##       \
+$C1######    ######   ######      ######   "
 
-// DEC Alpha logo (long, IBM-style)
+// DEC (Digital) block-style wordmark (long)
 #define ASCII_ALPHA_L \
-"$C1 #####    ######   #####              \
-$C1 ##  ##   ##      ##   ##             \
-$C1 ##  ##   #####   ##                  \
-$C1 ##  ##   ##      ##   ##             \
-$C1 #####    ######   #####              \
-$C1                                      \
-$C1              DEC                     "
+"$C1######   ######   ######        ######     ######    ######   \
+$C1##   ##   ##       ##    ##     ##         ##    ##   ##   ##  \
+$C1######    #####    ##    ##     #####      ##    ##   ######   \
+$C1##   ##   ##       ##    ##     ##         ##    ##   ##   ##  \
+$C1######    ######   ######       ######     ######    ######   \
+$C2                      DEC                                               "
 
 // inspired by the neofetch mac logo
 #define ASCII_APPLE \
@@ -749,7 +748,7 @@ asciiL logo_starfive_l  = { ASCII_STARFIVE_L,  50, 22, false, {C_FG_WHITE},     
 asciiL logo_sifive_l    = { ASCII_SIFIVE_L,    53, 21, true,  {C_BG_WHITE, C_BG_BLACK},                       {C_FG_WHITE, C_FG_CYAN}      };
 asciiL logo_nvidia_l    = { ASCII_NVIDIA_L,    50, 15, false, {C_FG_GREEN, C_FG_WHITE},                       {C_FG_WHITE, C_FG_GREEN}     };
 asciiL logo_unknown     = { NULL,               0,  0, false, {COLOR_NONE},                                   {COLOR_NONE, COLOR_NONE}     };
-asciiL logo_alpha       = { ASCII_ALPHA,       29,  5, false, {C_FG_RED},                                     {C_FG_WHITE,   C_FG_RED}     };
-asciiL logo_alpha_l     = { ASCII_ALPHA_L,     41,  7, false, {C_FG_RED},                                     {C_FG_WHITE,   C_FG_RED}     };
+asciiL logo_alpha       = { ASCII_ALPHA,       46,  5, false, {C_FG_RED, C_FG_WHITE},                         {C_FG_WHITE,   C_FG_RED}     };
+asciiL logo_alpha_l     = { ASCII_ALPHA_L,     66,  6, false, {C_FG_RED, C_FG_WHITE},                         {C_FG_WHITE,   C_FG_RED}     };
 
 #endif
