@@ -246,22 +246,31 @@ $C1 @@@@@@@@@   @@@@@@@@     @@@@@@@@    @@@@@@@@@@   \
 $C1 @@@   @@@   @@           @@         @@        @@  \
 $C1 @@@   @@@   @@           @@        @@          @@ "
 
-// DEC (Digital) block-style wordmark (short)
+// DEC (Digital) ASCII art (short)
 #define ASCII_ALPHA \
-"$C1######   ######   ######      ######   \
-$C1##   ##   ##       ##    ##    ##       \
-$C1######    #####    ##    ##    #####    \
-$C1##   ##   ##       ##    ##    ##       \
-$C1######    ######   ######      ######   "
+"$C1          _____                    _____                    _____          \
+$C1         /\\    \\                  /\\    \\                  /\\    \\         \
+$C1        /::\\    \\                /::\\    \\                /::\\    \\        \
+$C1       /::::\\    \\              /::::\\    \\              /::::\\    \\       \
+$C1      /::::::\\    \\            /::::::\\    \\            /::::::\\    \\      \
+$C1     /:::/\\:::\\    \\          /:::/\\:::\\    \\          /:::/\\:::\\    \\     \
+$C1    /:::/  \\\:::\\    \\        /:::/__\\:::\\    \\        /:::/  \\\:::\\    \\    \
+$C1   /:::/    \\\:::\\    \\      /::::\\   \\\:::\\    \\      /:::/    \\\:::\\    \\   \
+$C1  /:::/    / \\\:::\\    \\    /::::::\\   \\\:::\\    \\    /:::/    / \\\:::\\    \\  \
+$C1 /:::/    /   \\\:::\\ ___\\  /:::/\\:::\\   \\\:::\\    \\  /:::/    /   \\\:::\\    \\ \
+$C1/:::/____/     \\\:::|    |/:::/__\\:::\\   \\\:::\\____\\/:::/____/     \\\:::\\____\\\n+$C1\\:::\\    \\     /:::|____|\\:::\\   \\\:::\\   \\\::/    /\\:::\\    \\      \\\::/    /\
+$C1 \\\:::\\    \\   /:::/    /  \\\:::\\   \\\:::\\   \\/____/  \\\:::\\    \\      \\/____/ \
+$C1  \\\:::\\    \\ /:::/    /    \\\:::\\   \\\:::\\    \\       \\\:::\\    \\             \
+$C1   \\\:::\\    /:::/    /      \\\:::\\   \\\:::\\____\\       \\\:::\\    \\            \
+$C1    \\\:::\\  /:::/    /        \\\:::\\   \\\::/    /        \\\:::\\    \\           \
+$C1     \\\:::\\/:::/    /          \\\:::\\   \\/____/          \\\:::\\    \\          \
+$C1      \\\::::::/    /            \\\:::\\    \\               \\\:::\\    \\         \
+$C1       \\\::::/    /              \\\:::\\____\\               \\\:::\\____\\        \
+$C1        \\\::/____/                \\\::/    /                \\\::/    /        \
+$C1         ~~                       \\/____/                  \\/____/         "
 
-// DEC (Digital) block-style wordmark (long)
-#define ASCII_ALPHA_L \
-"$C1######   ######   ######        ######     ######    ######   \
-$C1##   ##   ##       ##    ##     ##         ##    ##   ##   ##  \
-$C1######    #####    ##    ##     #####      ##    ##   ######   \
-$C1##   ##   ##       ##    ##     ##         ##    ##   ##   ##  \
-$C1######    ######   ######       ######     ######    ######   \
-$C2                      DEC                                               "
+// DEC (Digital) ASCII art (long)
+#define ASCII_ALPHA_L ASCII_ALPHA
 
 // inspired by the neofetch mac logo
 #define ASCII_APPLE \
@@ -748,7 +757,7 @@ asciiL logo_starfive_l  = { ASCII_STARFIVE_L,  50, 22, false, {C_FG_WHITE},     
 asciiL logo_sifive_l    = { ASCII_SIFIVE_L,    53, 21, true,  {C_BG_WHITE, C_BG_BLACK},                       {C_FG_WHITE, C_FG_CYAN}      };
 asciiL logo_nvidia_l    = { ASCII_NVIDIA_L,    50, 15, false, {C_FG_GREEN, C_FG_WHITE},                       {C_FG_WHITE, C_FG_GREEN}     };
 asciiL logo_unknown     = { NULL,               0,  0, false, {COLOR_NONE},                                   {COLOR_NONE, COLOR_NONE}     };
-asciiL logo_alpha       = { ASCII_ALPHA,       46,  5, false, {C_FG_RED, C_FG_WHITE},                         {C_FG_WHITE,   C_FG_RED}     };
-asciiL logo_alpha_l     = { ASCII_ALPHA_L,     66,  6, false, {C_FG_RED, C_FG_WHITE},                         {C_FG_WHITE,   C_FG_RED}     };
+asciiL logo_alpha       = { ASCII_ALPHA,       75, 24, false, {C_FG_WHITE},                                   {C_FG_WHITE,   C_FG_WHITE}   };
+asciiL logo_alpha_l     = { ASCII_ALPHA_L,     75, 24, false, {C_FG_WHITE},                                   {C_FG_WHITE,   C_FG_WHITE}   };
 
 #endif
