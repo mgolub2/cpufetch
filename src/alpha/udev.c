@@ -9,7 +9,7 @@
 // Parse Alpha's "cycle frequency [Hz]" field
 // Example: "cycle frequency [Hz]    : 616541423 est."
 long get_frequency_from_cpuinfo_alpha(void) {
-  char* hz_str = get_field_from_cpuinfo("cycle frequency [Hz]\t: ");
+  char* hz_str = get_field_from_cpuinfo("cycle frequency [Hz]    : ");
   if (!hz_str) return UNKNOWN_DATA;
   errno = 0;
   char* end = NULL;
@@ -36,15 +36,15 @@ static long parse_alpha_cache_kb(const char* field) {
 }
 
 long get_l1i_cache_size_alpha(void) {
-  return parse_alpha_cache_kb("L1 Icache\t\t: ");
+  return parse_alpha_cache_kb("L1 Icache               : ");
 }
 
 long get_l1d_cache_size_alpha(void) {
-  return parse_alpha_cache_kb("L1 Dcache\t\t: ");
+  return parse_alpha_cache_kb("L1 Dcache               : ");
 }
 
 long get_l2_cache_size_alpha(void) {
-  return parse_alpha_cache_kb("L2 cache\t\t: ");
+  return parse_alpha_cache_kb("L2 cache                : ");
 }
 
 
