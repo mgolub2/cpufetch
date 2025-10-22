@@ -10,7 +10,7 @@
 // Example: "cycle frequency [Hz]    : 616541423 est."
 long get_frequency_from_cpuinfo_alpha(void) {
   // Try the canonical tab-separated format first
-  char* hz_str = get_field_from_cpuinfo("cycle frequency [Hz]\t: ");
+  char* hz_str = get_field_from_cpuinfo("cycle frequency [Hz]    : ");
   if (hz_str == NULL) {
     // Fallback: Alpha kernels sometimes use spaces instead of tabs before the colon
     // Search for the field name without the trailing whitespace and parse manually
