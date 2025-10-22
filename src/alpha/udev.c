@@ -36,15 +36,15 @@ static long parse_alpha_cache_kb(const char* field) {
 }
 
 long get_l1i_cache_size_alpha(void) {
-  return parse_alpha_cache_kb("L1 Icache               : ");
+  return parse_alpha_cache_kb("L1 Icache\t\t: ");
 }
 
 long get_l1d_cache_size_alpha(void) {
-  return parse_alpha_cache_kb("L1 Dcache               : ");
+  return parse_alpha_cache_kb("L1 Dcache\t\t: ");
 }
 
 long get_l2_cache_size_alpha(void) {
-  return parse_alpha_cache_kb("L2 cache                : ");
+  return parse_alpha_cache_kb("L2 cache\t\t: ");
 }
 
 
