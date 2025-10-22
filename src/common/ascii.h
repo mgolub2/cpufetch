@@ -758,7 +758,7 @@ asciiL logo_starfive_l  = { ASCII_STARFIVE_L,  50, 22, false, {C_FG_WHITE},     
 asciiL logo_sifive_l    = { ASCII_SIFIVE_L,    53, 21, true,  {C_BG_WHITE, C_BG_BLACK},                       {C_FG_WHITE, C_FG_CYAN}      };
 asciiL logo_nvidia_l    = { ASCII_NVIDIA_L,    50, 15, false, {C_FG_GREEN, C_FG_WHITE},                       {C_FG_WHITE, C_FG_GREEN}     };
 asciiL logo_unknown     = { NULL,               0,  0, false, {COLOR_NONE},                                   {COLOR_NONE, COLOR_NONE}     };
-asciiL logo_alpha       = { ASCII_ALPHA,       75, 20, false, {C_FG_WHITE},                                   {C_FG_WHITE,   C_FG_WHITE}   };
-asciiL logo_alpha_l     = { ASCII_ALPHA_L,     75, 20, false, {C_FG_WHITE},                                   {C_FG_WHITE,   C_FG_WHITE}   };
+asciiL logo_alpha       = { ASCII_ALPHA,       75, 21, false, {C_FG_RED},                                   {C_FG_WHITE,   C_FG_WHITE}   };
+asciiL logo_alpha_l     = { ASCII_ALPHA_L,     75, 21, false, {C_FG_RED},                                   {C_FG_WHITE,   C_FG_WHITE}   };
 
 #endif
